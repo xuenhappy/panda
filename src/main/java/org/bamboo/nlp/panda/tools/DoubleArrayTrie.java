@@ -43,32 +43,22 @@ public class DoubleArrayTrie<V> implements Serializable {
 	protected int size;
 
 	/**
-	 * 
-	 */
-	protected Map<Item, Integer> item_code;
-
-	/**
 	 * Parse text
 	 *
 	 * @param text The text
 	 * @return a list of outputs
 	 */
-	public List<Hit<V>> parseText(Iterator<Item> text) {
+	public List<Hit<V>> parseText(CharSequence text) {
 		int position = 1;
 		int currentState = 0;
 		List<Hit<V>> collectedEmits = new ArrayList<Hit<V>>();
-		while (text.hasNext()) {
-			currentState = getState(currentState, getCode(text.next()));
+		for (int i = 0; i < text.length(); ++i) {
+			currentState = getState(currentState, text.charAt(i));
 			storeEmits(position, currentState, collectedEmits);
 			++position;
 		}
-		return collectedEmits;
-	}
 
-	private int getCode(Item next) {
-		if (item_code.containsKey(next))
-			return item_code.get(next);
-		return item_code.size() + 1;
+		return collectedEmits;
 	}
 
 	/**
@@ -203,7 +193,6 @@ public class DoubleArrayTrie<V> implements Serializable {
 	 * @throws IOException Some IOException
 	 */
 	public void save(ObjectOutputStream out) throws IOException {
-		out.writeObject(item_code);
 		out.writeObject(base);
 		out.writeObject(check);
 		out.writeObject(fail);
@@ -221,7 +210,6 @@ public class DoubleArrayTrie<V> implements Serializable {
 	 */
 	@SuppressWarnings("unchecked")
 	public void load(ObjectInputStream in) throws IOException, ClassNotFoundException {
-		item_code = (Map<Item, Integer>) in.readObject();
 		base = (int[]) in.readObject();
 		check = (int[]) in.readObject();
 		fail = (int[]) in.readObject();
@@ -433,7 +421,7 @@ public class DoubleArrayTrie<V> implements Serializable {
 	 *
 	 * @param map a map containing key-value pairs
 	 */
-	public void build(Map<ItemSequence, V> map) {
+	public void build(Map<? extends CharSequence, V> map) {
 		new Builder().build(map);
 	}
 
@@ -532,15 +520,11 @@ public class DoubleArrayTrie<V> implements Serializable {
 		 * @param map a map containing key-value pairs
 		 */
 		@SuppressWarnings("unchecked")
-		public void build(Map<ItemSequence, V> map) {
-			// 构建字符映射
-			item_code = new HashMap<Item, Integer>();
+		public void build(Map<? extends CharSequence, V> map) {
 			// 把值保存下来
 			v = (V[]) map.values().toArray();
 			l = new int[v.length];
-			Set<ItemSequence> keySet = map.keySet();
-			// 构建字符映射
-			buildCodeMap(keySet);
+			Set<? extends CharSequence> keySet = map.keySet();
 			// 构建二分trie树
 			addAllKeyword(keySet);
 			// 在二分trie树的基础上构建双数组trie树
@@ -550,21 +534,6 @@ public class DoubleArrayTrie<V> implements Serializable {
 			constructFailureStates();
 			rootState = null;
 			loseWeight();
-		}
-
-		/**
-		 * 构建字符到int的映射表
-		 * 
-		 * @param keySet
-		 */
-		private void buildCodeMap(Set<ItemSequence> keySet) {
-			for (ItemSequence seq : keySet) {
-				for (Item c : seq.toItemArray()) {
-					if (item_code.containsKey(c))
-						continue;
-					item_code.put(c, item_code.size() + 1);
-				}
-			}
 		}
 
 		/**
@@ -580,9 +549,8 @@ public class DoubleArrayTrie<V> implements Serializable {
 				fakeNode.addEmit(parent.getLargestValueId());
 				siblings.add(new AbstractMap.SimpleEntry<Integer, State>(0, fakeNode));
 			}
-			for (Map.Entry<Item, State> entry : parent.getSuccess().entrySet()) {
-				siblings.add(
-						new AbstractMap.SimpleEntry<Integer, State>(getCode(entry.getKey()) + 1, entry.getValue()));
+			for (Map.Entry<Integer, State> entry : parent.getSuccess().entrySet()) {
+				siblings.add(new AbstractMap.SimpleEntry<Integer, State>(entry.getKey() + 1, entry.getValue()));
 			}
 			return siblings.size();
 		}
@@ -593,10 +561,10 @@ public class DoubleArrayTrie<V> implements Serializable {
 		 * @param keyword a keyword
 		 * @param index   the index of the keyword
 		 */
-		private void addKeyword(ItemSequence keyword, int index) {
+		private void addKeyword(CharSequence keyword, int index) {
 			State currentState = this.rootState;
-			for (Item character : keyword.toItemArray())
-				currentState = currentState.addState(character);
+			for (int j = 0; j < keyword.length(); j++)
+				currentState = currentState.addState(keyword.charAt(j));
 			currentState.addEmit(index);
 			l[index] = keyword.length();
 		}
@@ -606,9 +574,9 @@ public class DoubleArrayTrie<V> implements Serializable {
 		 *
 		 * @param keywordSet the collection holding keywords
 		 */
-		private void addAllKeyword(Collection<ItemSequence> keywordSet) {
+		private void addAllKeyword(Collection<? extends CharSequence> keywordSet) {
 			int i = 0;
-			for (ItemSequence keyword : keywordSet)
+			for (CharSequence keyword : keywordSet)
 				addKeyword(keyword, i++);
 		}
 
@@ -630,7 +598,7 @@ public class DoubleArrayTrie<V> implements Serializable {
 			// 第二步，为深度 > 1 的节点建立failure表，这是一个bfs
 			while (!queue.isEmpty()) {
 				State currentState = queue.remove();
-				for (Item transition : currentState.getTransitions()) {
+				for (Integer transition : currentState.getTransitions()) {
 					State targetState = currentState.nextState(transition);
 					queue.add(targetState);
 

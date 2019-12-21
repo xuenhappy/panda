@@ -32,7 +32,7 @@ public class State {
 	/**
 	 * goto map
 	 */
-	private Map<Item, State> success = new TreeMap<Item, State>();
+	private Map<Integer, State> success = new TreeMap<Integer, State>();
 
 	/**
 	 * index of in array
@@ -92,7 +92,7 @@ public class State {
 		fail[index] = failState.index;
 	}
 
-	private State nextState(Item character, boolean ignoreRootState) {
+	private State nextState(Integer character, boolean ignoreRootState) {
 		State nextState = this.success.get(character);
 		if (!ignoreRootState && nextState == null && this.depth == 0) {
 			nextState = this;
@@ -100,15 +100,15 @@ public class State {
 		return nextState;
 	}
 
-	public State nextState(Item character) {
+	public State nextState(Integer character) {
 		return nextState(character, false);
 	}
 
-	public State nextStateIgnoreRootState(Item character) {
+	public State nextStateIgnoreRootState(Integer character) {
 		return nextState(character, true);
 	}
 
-	public State addState(Item character) {
+	public State addState(int character) {
 		State nextState = nextStateIgnoreRootState(character);
 		if (nextState == null) {
 			nextState = new State(this.depth + 1);
@@ -121,7 +121,7 @@ public class State {
 		return this.success.values();
 	}
 
-	public Collection<Item> getTransitions() {
+	public Collection<Integer> getTransitions() {
 		return this.success.keySet();
 	}
 
@@ -133,7 +133,7 @@ public class State {
 		return sb.toString();
 	}
 
-	public Map<Item, State> getSuccess() {
+	public Map<Integer, State> getSuccess() {
 		return success;
 	}
 

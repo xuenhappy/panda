@@ -295,4 +295,33 @@ public class TestAhoCorasickDoubleArrayTrie {
         assertEquals(0, acdat.size());
     }
 
+    public static void main(String[] args) {
+    	TreeMap<String, String> map = new TreeMap<String, String>();
+        String[] keyArray = new String[]
+                {
+                        "foo",
+                        "bar",
+                        "owe"
+                };
+        for (String key : keyArray)
+        {
+            map.put(key, key);
+        }
+        // Build an AhoCorasickDoubleArrayTrie
+        DoubleArrayTrie<String> acdat = new DoubleArrayTrie<String>();
+        acdat.build(map);
+        // count matches
+        String haystack = "sfwtfoowercwbarqwrcq";
+      
+        acdat.parseText(haystack, new DoubleArrayTrie.IHitCancellable<String>() {
+
+			@Override
+			public boolean hit(int begin, int end, String value) {
+				System.out.println(begin+","+end+","+value);
+				return true;
+			}
+        	
+        });
+		
+	}
 }
