@@ -23,8 +23,12 @@
 			<url>http://maven.aliyun.com/nexus/content/groups/public/</url>
 		</repository>
 		<repository>
-			<id>imagej</id>
-			<url>http://maven.imagej.net/content/repositories/public/</url>
+			<id>spring-libs</id>
+			<url>https://repo.spring.io/libs-release/</url>
+		</repository>
+		<repository>
+			<id>imagej.public</id>
+			<url>https://maven.scijava.org/content/repositories/public/</url>
 		</repository>
 	</repositories>
 
