@@ -56,6 +56,12 @@ public class WordCell implements HtmlVisually {
 		return types;
 	}
 
+	public boolean hasType(CellType type) {
+		if (types != null && types.contains(type))
+			return true;
+		return false;
+	}
+
 	public void addType(CellType type) {
 		if (this.types == null)
 			this.types = new TreeSet<CellType>();
