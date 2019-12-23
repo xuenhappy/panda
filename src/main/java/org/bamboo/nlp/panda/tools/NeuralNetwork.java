@@ -132,7 +132,7 @@ public final class NeuralNetwork {
 			FloatMatrix h_n = gh.getRange(0, gh.rows, len * 2, len * 3);
 
 			FloatMatrix resetgate = Activation.Sigmoid.act.dothis(i_r.addi(h_r));
-			FloatMatrix inputgate = Activation.Sigmoid.act.dothis(i_i.add(h_i));
+			FloatMatrix inputgate = Activation.Sigmoid.act.dothis(i_i.addi(h_i));
 			FloatMatrix newgate = Activation.Tanh.act.dothis(i_n.addi(resetgate.muli(h_n)));
 			FloatMatrix hy = newgate.addi(inputgate.muli(state.subi(newgate)));
 			return hy;
