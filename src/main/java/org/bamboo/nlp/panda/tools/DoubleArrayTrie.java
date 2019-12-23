@@ -175,26 +175,7 @@ public class DoubleArrayTrie<V> {
 		return newCurrentState;
 	}
 
-	/**
-	 * transition of a state
-	 *
-	 * @param current
-	 * @param c
-	 * @return
-	 */
-	protected int transition(int current, char c) {
-		int b = current;
-		int p;
 
-		p = b + c + 1;
-		if (b == check[p])
-			b = base[p];
-		else
-			return -1;
-
-		p = b;
-		return p;
-	}
 
 	/**
 	 * transition of a state, if the state is root and it failed, then returns the
