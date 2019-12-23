@@ -5,6 +5,12 @@ package org.bamboo.nlp.panda.core;
  * @author xuen
  *
  */
-public class TimeCellRecognizer {
+public class TimeCellRecognizer implements CellRecognizer{
+
+	@Override
+	public void read(WordCellList baseStr, CellMap map) {
+		// TODO Auto-generated method stub
+		
+	}
 
 }

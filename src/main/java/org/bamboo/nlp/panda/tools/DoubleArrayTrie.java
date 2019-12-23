@@ -45,7 +45,7 @@ public class DoubleArrayTrie<V> {
 	 * 
 	 * @param datas
 	 */
-	protected void buildCodeMap(List<StrList> datas) {
+	protected void buildCodeMap(List<? extends StrList> datas) {
 		if (codeMap == null)
 			codeMap = new HashMap<CharSequence, Integer>(datas.size() / 3 + 10);
 		for (StrList ent : datas)
@@ -60,7 +60,6 @@ public class DoubleArrayTrie<V> {
 		if (codeMap.containsKey(seq))
 			return codeMap.get(seq);
 		return codeMap.size() + 1;
-
 	}
 
 	/**
@@ -69,7 +68,7 @@ public class DoubleArrayTrie<V> {
 	 * @param text      The text
 	 * @param processor A processor which handles the output
 	 */
-	public void parseText(List<? extends CharSequence> text, IHit<V> processor) {
+	public void parseText(StrList text, IHit<V> processor) {
 		int position = 1;
 		int currentState = 0;
 		for (CharSequence seq : text) {
@@ -92,7 +91,7 @@ public class DoubleArrayTrie<V> {
 	 * @param text source text to check
 	 * @return {@code true} if string contains at least one substring
 	 */
-	public boolean matches(List<CharSequence> text) {
+	public boolean matches(StrList text) {
 		int currentState = 0;
 		for (CharSequence chr : text) {
 			currentState = getState(currentState, getCode(chr));
@@ -224,7 +223,7 @@ public class DoubleArrayTrie<V> {
 	 *
 	 * @param map a map containing key-value pairs
 	 */
-	public void build(List<StrList> keys, List<V> tags) {
+	public void build(List<? extends StrList> keys, List<V> tags) {
 		new Builder().build(keys, tags);
 	}
 
@@ -321,7 +320,7 @@ public class DoubleArrayTrie<V> {
 		 * @param map a map containing key-value pairs
 		 */
 		@SuppressWarnings("unchecked")
-		public void build(List<StrList> keys, List<V> tags) {
+		public void build(List<? extends StrList> keys, List<V> tags) {
 			assert keys.size() == tags.size();
 			buildCodeMap(keys);
 			v = (V[]) tags.toArray();
@@ -375,7 +374,7 @@ public class DoubleArrayTrie<V> {
 		 *
 		 * @param keywordSet the collection holding keywords
 		 */
-		private void addAllKeyword(Collection<StrList> keywordSet) {
+		private void addAllKeyword(Collection<? extends StrList> keywordSet) {
 			int i = 0;
 			for (StrList keyword : keywordSet)
 				addKeyword(keyword, i++);

@@ -13,7 +13,7 @@ public class DictCellRecongnizer implements CellRecognizer{
 
 
 	@Override
-	public void read(CharSequence baseStr, CellMap map) {
+	public void read(WordCellList baseStr, CellMap map) {
 	
 		
 	}
