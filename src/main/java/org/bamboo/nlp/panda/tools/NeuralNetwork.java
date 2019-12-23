@@ -54,7 +54,7 @@ public final class NeuralNetwork {
 		Exp(new AFC() {
 			public FloatMatrix dothis(FloatMatrix val) {
 				return MatrixFunctions.expi(val);
-			};
+			}
 		});
 
 		private final AFC act;
@@ -82,7 +82,7 @@ public final class NeuralNetwork {
 		}
 
 		public FloatMatrix forward(FloatMatrix input) {
-			FloatMatrix val = input.mul(weight);
+			FloatMatrix val = input.mmul(weight);
 			if (blas != null)
 				val = val.addiRowVector(blas);
 			if (activation != null)
@@ -113,24 +113,28 @@ public final class NeuralNetwork {
 		}
 
 		private FloatMatrix linear(FloatMatrix args, FloatMatrix weights, FloatMatrix biases) {
-			FloatMatrix x = args.mul(weights);
+			FloatMatrix x = args.mmul(weights);
 			if (biases != null)
 				x = x.addiRowVector(biases);
 			return x;
 		}
 
 		public FloatMatrix forward(FloatMatrix state, FloatMatrix input) {
-			FloatMatrix gi =linear(input, wIh, bIh);
-	        FloatMatrix gh =linear(state,wHh, bHh);
-	        i_r, i_i, i_n = np.split(gi, 3, axis=1);
-	        h_r, h_i, h_n = np.split(gh, 3, axis=1);
-	        resetgate= sigmoid(i_r + h_r);
-	     
-	        inputgate = sigmoid(i_i + h_i);
-	        		FloatMatrix newgate =Activation.Tanh.act.dothis( (i_n + resetgate * h_n));
-	        FloatMatrix hy = newgate.addi( inputgate * (state - newgate))
-			
-			
+			FloatMatrix gi = linear(input, wIh, bIh);
+			FloatMatrix gh = linear(state, wHh, bHh);
+			int len = gi.columns / 3;
+			FloatMatrix i_r = gi.getRange(0, gi.rows, 0, len);
+			FloatMatrix i_i = gi.getRange(0, gi.rows, len, len * 2);
+			FloatMatrix i_n = gi.getRange(0, gi.rows, len * 2, len * 3);
+			len = gh.columns / 3;
+			FloatMatrix h_r = gh.getRange(0, gh.rows, 0, len);
+			FloatMatrix h_i = gh.getRange(0, gh.rows, len, len * 2);
+			FloatMatrix h_n = gh.getRange(0, gh.rows, len * 2, len * 3);
+
+			FloatMatrix resetgate = Activation.Sigmoid.act.dothis(i_r.addi(h_r));
+			FloatMatrix inputgate = Activation.Sigmoid.act.dothis(i_i.add(h_i));
+			FloatMatrix newgate = Activation.Tanh.act.dothis(i_n.addi(resetgate.muli(h_n)));
+			FloatMatrix hy = newgate.addi(inputgate.muli(state.subi(newgate)));
 			return hy;
 		}
 
@@ -145,25 +149,21 @@ public final class NeuralNetwork {
 			return this.wHh.rows;
 		}
 
-		public FloatMatrix runGru(FloatMatrix input) {
-			/**
-			 * input: (timeSteps, tokenSize)
-			 */
+		/**
+		 * input size is [time_step,vec_size]
+		 * 
+		 * @param input
+		 * @return
+		 */
+		public FloatMatrix runRnn(FloatMatrix input) {
 			FloatMatrix outputs = new FloatMatrix(input.rows, this.GetStateSize());
 			FloatMatrix state = this.zeroState(1);
 			for (int i = 0; i < input.rows; i++) {
-				state = forward(input.getRow(i), state);
-				outputs.putRow(i, state.dup());
+				state = forward(input.getRow(i), state);// update state
+				outputs.putRow(i, state);// copy state data
 			}
 			return outputs;
 		}
-	}
-
-	public static void main(String[] args) {
-		FloatMatrix f1 = new FloatMatrix(new float[][] { { 1, 0, 3, 4 } });
-		FloatMatrix f2 = new FloatMatrix(new float[][] { { 8, 0, 3, 4 }, { 2, 3, 4, 5 } });
-		f2.addiRowVector(f1);
-		System.out.println(f2);
 	}
 
 }
