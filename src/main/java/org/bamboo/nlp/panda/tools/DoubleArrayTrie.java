@@ -386,7 +386,7 @@ public class DoubleArrayTrie<V> {
 		private void constructFailureStates() {
 			fail = new int[size + 1];
 			output = new int[size + 1][];
-			Queue<State> queue = new ArrayDeque<State>();
+			Queue<State> queue = new LinkedList<State>();
 
 			// 第一步，将深度为1的节点的failure设为根节点
 			for (State depthOneState : this.rootState.getStates()) {
