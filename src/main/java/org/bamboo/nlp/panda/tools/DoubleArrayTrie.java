@@ -1,16 +1,9 @@
 package org.bamboo.nlp.panda.tools;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.*;
 
-public class DoubleArrayTrie<V> implements Serializable {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -4637657061458822817L;
+public class DoubleArrayTrie<V> {
+
 	/**
 	 * check array of the Double Array Trie structure
 	 */
@@ -43,43 +36,31 @@ public class DoubleArrayTrie<V> implements Serializable {
 	protected int size;
 
 	/**
-	 * Parse text
-	 *
-	 * @param text The text
-	 * @return a list of outputs
+	 * the char seq code map;
 	 */
-	public List<Hit<V>> parseText(CharSequence text) {
-		int position = 1;
-		int currentState = 0;
-		List<Hit<V>> collectedEmits = new ArrayList<Hit<V>>();
-		for (int i = 0; i < text.length(); ++i) {
-			currentState = getState(currentState, text.charAt(i));
-			storeEmits(position, currentState, collectedEmits);
-			++position;
-		}
-
-		return collectedEmits;
-	}
+	protected Map<CharSequence, Integer> codeMap;
 
 	/**
-	 * Parse text
-	 *
-	 * @param text      The text
-	 * @param processor A processor which handles the output
+	 * buid code map
+	 * 
+	 * @param datas
 	 */
-	public void parseText(CharSequence text, IHit<V> processor) {
-		int position = 1;
-		int currentState = 0;
-		for (int i = 0; i < text.length(); ++i) {
-			currentState = getState(currentState, text.charAt(i));
-			int[] hitArray = output[currentState];
-			if (hitArray != null) {
-				for (int hit : hitArray) {
-					processor.hit(position - l[hit], position, v[hit]);
-				}
+	protected void buildCodeMap(List<StrList> datas) {
+		if (codeMap == null)
+			codeMap = new HashMap<CharSequence, Integer>(datas.size() / 3 + 10);
+		for (StrList ent : datas)
+			for (CharSequence seq : ent) {
+				if (codeMap.containsKey(seq))
+					continue;
+				codeMap.put(seq, codeMap.size() + 1);
 			}
-			++position;
-		}
+	}
+
+	protected Integer getCode(CharSequence seq) {
+		if (codeMap.containsKey(seq))
+			return codeMap.get(seq);
+		return codeMap.size() + 1;
+
 	}
 
 	/**
@@ -88,60 +69,18 @@ public class DoubleArrayTrie<V> implements Serializable {
 	 * @param text      The text
 	 * @param processor A processor which handles the output
 	 */
-	public void parseText(CharSequence text, IHitCancellable<V> processor) {
-		int currentState = 0;
-		for (int i = 0; i < text.length(); i++) {
-			final int position = i + 1;
-			currentState = getState(currentState, text.charAt(i));
-			int[] hitArray = output[currentState];
-			if (hitArray != null) {
-				for (int hit : hitArray) {
-					boolean proceed = processor.hit(position - l[hit], position, v[hit]);
-					if (!proceed) {
-						return;
-					}
-				}
-			}
-		}
-	}
-
-	/**
-	 * Parse text
-	 *
-	 * @param text      The text
-	 * @param processor A processor which handles the output
-	 */
-	public void parseText(char[] text, IHit<V> processor) {
+	public void parseText(List<? extends CharSequence> text, IHit<V> processor) {
 		int position = 1;
 		int currentState = 0;
-		for (char c : text) {
-			currentState = getState(currentState, c);
+		for (CharSequence seq : text) {
+			currentState = getState(currentState, getCode(seq));
 			int[] hitArray = output[currentState];
-			if (hitArray != null) {
-				for (int hit : hitArray) {
-					processor.hit(position - l[hit], position, v[hit]);
-				}
-			}
-			++position;
-		}
-	}
+			if (hitArray == null)
+				continue;
 
-	/**
-	 * Parse text
-	 *
-	 * @param text      The text
-	 * @param processor A processor which handles the output
-	 */
-	public void parseText(char[] text, IHitFull<V> processor) {
-		int position = 1;
-		int currentState = 0;
-		for (char c : text) {
-			currentState = getState(currentState, c);
-			int[] hitArray = output[currentState];
-			if (hitArray != null) {
-				for (int hit : hitArray) {
-					processor.hit(position - l[hit], position, v[hit], hit);
-				}
+			for (int hit : hitArray) {
+				if (!processor.hit(position - l[hit], position, v[hit]))
+					return;
 			}
 			++position;
 		}
@@ -153,69 +92,15 @@ public class DoubleArrayTrie<V> implements Serializable {
 	 * @param text source text to check
 	 * @return {@code true} if string contains at least one substring
 	 */
-	public boolean matches(String text) {
+	public boolean matches(List<CharSequence> text) {
 		int currentState = 0;
-		for (int i = 0; i < text.length(); ++i) {
-			currentState = getState(currentState, text.charAt(i));
+		for (CharSequence chr : text) {
+			currentState = getState(currentState, getCode(chr));
 			int[] hitArray = output[currentState];
-			if (hitArray != null) {
+			if (hitArray != null)
 				return true;
-			}
 		}
 		return false;
-	}
-
-	/**
-	 * Search first match in string
-	 *
-	 * @param text source text to check
-	 * @return first match or {@code null} if there are no matches
-	 */
-	public Hit<V> findFirst(String text) {
-		int position = 1;
-		int currentState = 0;
-		for (int i = 0; i < text.length(); ++i) {
-			currentState = getState(currentState, text.charAt(i));
-			int[] hitArray = output[currentState];
-			if (hitArray != null) {
-				int hitIndex = hitArray[0];
-				return new Hit<V>(position - l[hitIndex], position, v[hitIndex]);
-			}
-			++position;
-		}
-		return null;
-	}
-
-	/**
-	 * Save
-	 *
-	 * @param out An ObjectOutputStream object
-	 * @throws IOException Some IOException
-	 */
-	public void save(ObjectOutputStream out) throws IOException {
-		out.writeObject(base);
-		out.writeObject(check);
-		out.writeObject(fail);
-		out.writeObject(output);
-		out.writeObject(l);
-		out.writeObject(v);
-	}
-
-	/**
-	 * Load data from [ObjectInputStream]
-	 *
-	 * @param in An ObjectInputStream object
-	 * @throws IOException            If can't read the file from path
-	 * @throws ClassNotFoundException If the class doesn't exist or matched
-	 */
-	@SuppressWarnings("unchecked")
-	public void load(ObjectInputStream in) throws IOException, ClassNotFoundException {
-		base = (int[]) in.readObject();
-		check = (int[]) in.readObject();
-		fail = (int[]) in.readObject();
-		output = (int[][]) in.readObject();
-		l = (int[]) in.readObject();
-		v = (V[]) in.readObject();
 	}
 
 	/**
@@ -224,12 +109,10 @@ public class DoubleArrayTrie<V> implements Serializable {
 	 * @param key The key
 	 * @return value if exist otherwise it return null
 	 */
-	public V get(String key) {
+	public V get(StrList key) {
 		int index = exactMatchSearch(key);
-		if (index >= 0) {
+		if (index >= 0)
 			return v[index];
-		}
-
 		return null;
 	}
 
@@ -240,13 +123,12 @@ public class DoubleArrayTrie<V> implements Serializable {
 	 * @param value the value
 	 * @return successful or not（failure if there is no key）
 	 */
-	public boolean set(String key, V value) {
+	public boolean set(StrList key, V value) {
 		int index = exactMatchSearch(key);
 		if (index >= 0) {
 			v[index] = value;
 			return true;
 		}
-
 		return false;
 	}
 
@@ -272,72 +154,9 @@ public class DoubleArrayTrie<V> implements Serializable {
 		 * @param begin the beginning index, inclusive.
 		 * @param end   the ending index, exclusive.
 		 * @param value the value assigned to the keyword
-		 */
-		void hit(int begin, int end, V value);
-	}
-
-	/**
-	 * Processor handles the output when hit a keyword, with more detail
-	 */
-	public interface IHitFull<V> {
-		/**
-		 * Hit a keyword, you can use some code like text.substring(begin, end) to get
-		 * the keyword
-		 *
-		 * @param begin the beginning index, inclusive.
-		 * @param end   the ending index, exclusive.
-		 * @param value the value assigned to the keyword
-		 * @param index the index of the value assigned to the keyword, you can use the
-		 *              integer as a perfect hash value
-		 */
-		void hit(int begin, int end, V value, int index);
-	}
-
-	/**
-	 * Callback that allows to cancel the search process.
-	 */
-	public interface IHitCancellable<V> {
-		/**
-		 * Hit a keyword, you can use some code like text.substring(begin, end) to get
-		 * the keyword
-		 *
-		 * @param begin the beginning index, inclusive.
-		 * @param end   the ending index, exclusive.
-		 * @param value the value assigned to the keyword
 		 * @return Return true for continuing the search and false for stopping it.
 		 */
 		boolean hit(int begin, int end, V value);
-	}
-
-	/**
-	 * A result output
-	 *
-	 * @param <V> the value type
-	 */
-	public static class Hit<V> {
-		/**
-		 * the beginning index, inclusive.
-		 */
-		public final int begin;
-		/**
-		 * the ending index, exclusive.
-		 */
-		public final int end;
-		/**
-		 * the value assigned to the keyword
-		 */
-		public final V value;
-
-		public Hit(int begin, int end, V value) {
-			this.begin = begin;
-			this.end = end;
-			this.value = value;
-		}
-
-		@Override
-		public String toString() {
-			return String.format("[%d:%d]=%s", begin, end, value);
-		}
 	}
 
 	/**
@@ -355,22 +174,6 @@ public class DoubleArrayTrie<V> implements Serializable {
 			newCurrentState = transitionWithRoot(currentState, character);
 		}
 		return newCurrentState;
-	}
-
-	/**
-	 * store output
-	 *
-	 * @param position
-	 * @param currentState
-	 * @param collectedEmits
-	 */
-	private void storeEmits(int position, int currentState, List<Hit<V>> collectedEmits) {
-		int[] hitArray = output[currentState];
-		if (hitArray != null) {
-			for (int hit : hitArray) {
-				collectedEmits.add(new Hit<V>(position - l[hit], position, v[hit]));
-			}
-		}
 	}
 
 	/**
@@ -421,8 +224,8 @@ public class DoubleArrayTrie<V> implements Serializable {
 	 *
 	 * @param map a map containing key-value pairs
 	 */
-	public void build(Map<? extends CharSequence, V> map) {
-		new Builder().build(map);
+	public void build(List<StrList> keys, List<V> tags) {
+		new Builder().build(keys, tags);
 	}
 
 	/**
@@ -431,7 +234,7 @@ public class DoubleArrayTrie<V> implements Serializable {
 	 * @param key the key
 	 * @return the index of the key, you can use it as a perfect hash function
 	 */
-	public int exactMatchSearch(String key) {
+	public int exactMatchSearch(StrList key) {
 		return exactMatchSearch(key, 0, 0, 0);
 	}
 
@@ -444,25 +247,23 @@ public class DoubleArrayTrie<V> implements Serializable {
 	 * @param nodePos
 	 * @return
 	 */
-	private int exactMatchSearch(String key, int pos, int len, int nodePos) {
+	private int exactMatchSearch(StrList key, int pos, int len, int nodePos) {
 		if (len <= 0)
-			len = key.length();
+			len = key.size();
 		if (nodePos <= 0)
 			nodePos = 0;
 
 		int result = -1;
 
-		char[] keyChars = key.toCharArray();
-
-		return getMatched(pos, len, result, keyChars, base[nodePos]);
+		return getMatched(pos, len, result, key, base[nodePos]);
 	}
 
-	private int getMatched(int pos, int len, int result, char[] keyChars, int b1) {
+	private int getMatched(int pos, int len, int result, StrList keyChars, int b1) {
 		int b = b1;
 		int p;
 
-		for (int i = pos; i < len; i++) {
-			p = b + (int) (keyChars[i]) + 1;
+		for (CharSequence chr : keyChars) {
+			p = b + getCode(chr) + 1;
 			if (b == check[p])
 				b = base[p];
 			else
@@ -520,15 +321,15 @@ public class DoubleArrayTrie<V> implements Serializable {
 		 * @param map a map containing key-value pairs
 		 */
 		@SuppressWarnings("unchecked")
-		public void build(Map<? extends CharSequence, V> map) {
-			// 把值保存下来
-			v = (V[]) map.values().toArray();
+		public void build(List<StrList> keys, List<V> tags) {
+			assert keys.size() == tags.size();
+			buildCodeMap(keys);
+			v = (V[]) tags.toArray();
 			l = new int[v.length];
-			Set<? extends CharSequence> keySet = map.keySet();
 			// 构建二分trie树
-			addAllKeyword(keySet);
+			addAllKeyword(keys);
 			// 在二分trie树的基础上构建双数组trie树
-			buildDoubleArrayTrie(keySet.size());
+			buildDoubleArrayTrie(keys.size());
 			used = null;
 			// 构建failure表并且合并output表
 			constructFailureStates();
@@ -561,12 +362,12 @@ public class DoubleArrayTrie<V> implements Serializable {
 		 * @param keyword a keyword
 		 * @param index   the index of the keyword
 		 */
-		private void addKeyword(CharSequence keyword, int index) {
+		private void addKeyword(StrList keyword, int index) {
 			State currentState = this.rootState;
-			for (int j = 0; j < keyword.length(); j++)
-				currentState = currentState.addState(keyword.charAt(j));
+			for (CharSequence seq : keyword)
+				currentState = currentState.addState(getCode(seq));
 			currentState.addEmit(index);
-			l[index] = keyword.length();
+			l[index] = keyword.size();
 		}
 
 		/**
@@ -574,9 +375,9 @@ public class DoubleArrayTrie<V> implements Serializable {
 		 *
 		 * @param keywordSet the collection holding keywords
 		 */
-		private void addAllKeyword(Collection<? extends CharSequence> keywordSet) {
+		private void addAllKeyword(Collection<StrList> keywordSet) {
 			int i = 0;
-			for (CharSequence keyword : keywordSet)
+			for (StrList keyword : keywordSet)
 				addKeyword(keyword, i++);
 		}
 
@@ -632,7 +433,7 @@ public class DoubleArrayTrie<V> implements Serializable {
 		private void buildDoubleArrayTrie(int keySize) {
 			progress = 0;
 			this.keySize = keySize;
-			resize(65536 * 32); // 32个双字节
+			resize(codeMap.size() + 10);
 
 			base[0] = 1;
 			nextCheckPos = 0;
