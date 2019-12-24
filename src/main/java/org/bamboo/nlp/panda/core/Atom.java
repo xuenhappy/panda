@@ -1,0 +1,56 @@
+package org.bamboo.nlp.panda.core;
+
+import java.util.Set;
+import java.util.TreeSet;
+
+/**
+ * 基本的单元
+ * 
+ * @author xuen
+ *
+ */
+public final class Atom {
+	/**
+	 * string of data
+	 */
+	public final String image;
+	/**
+	 * string start in ori data
+	 */
+	public final int pos;
+	/**
+	 * string end in ori data
+	 */
+	public final int end;
+
+	/**
+	 * the type of this image
+	 */
+	private Set<CellType> types;
+
+	@Override
+	public String toString() {
+		return "Atom [image=" + image + ", pos=" + pos + ", end=" + end + "]";
+	}
+
+	public Atom(String image, int pos, int end) {
+		super();
+		this.types = new TreeSet<CellType>();
+		this.image = image;
+		this.pos = pos;
+		this.end = end;
+	}
+	
+	
+	public void addType(CellType type) {
+		this.types.add(type);
+	}
+
+	public Set<CellType> getTypes() {
+		return types;
+	}
+	
+	public boolean hasType(CellType type) {
+		return types.contains(type);
+	}
+}

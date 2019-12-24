@@ -12,9 +12,9 @@ import org.bamboo.nlp.panda.tools.StrList;
  */
 public class WordCellList implements StrList, HtmlVisually {
 
-	private final WordCell[] cells;
+	private final Atom[] cells;
 
-	public WordCellList(WordCell[] cells) {
+	public WordCellList(Atom[] cells) {
 		super();
 		this.cells = cells;
 	}
@@ -55,6 +55,32 @@ public class WordCellList implements StrList, HtmlVisually {
 					cells[i].image));
 		html.append("</tr></table>");
 		return html.toString();
+	}
+
+	/**
+	 * get the index of the array
+	 * 
+	 * @param index
+	 * @return
+	 */
+	public Atom get(int index) {
+		return cells[index];
+	}
+
+	/**
+	 * sub this atom list as a new atom
+	 * @param pos 
+	 * @param end
+	 * @return
+	 */
+	public Atom sub(int pos, int end) {
+		if (end <= pos)
+			return null;
+		StringBuilder b = new StringBuilder();
+		for (int j = pos; j < end; j++) {
+			b.append(cells[j].image);
+		}
+		return new Atom(b.toString(), cells[pos].pos, cells[end - 1].end);
 	}
 
 }

@@ -8,22 +8,19 @@ import java.util.Collection;
  *
  */
 
-import java.util.Set;
-import java.util.TreeSet;
-
 public class WordCell implements HtmlVisually {
 	/**
 	 * image str
 	 */
-	public final CharSequence image;
+	public final Atom word;
 
 	/**
-	 * the start in base string
+	 * the start in cell list
 	 */
-	public final int start;
+	public final int pos;
 
 	/**
-	 * the end position of this string in origin string
+	 * the end position of this string in cell list
 	 */
 	public final int end;
 
@@ -32,15 +29,10 @@ public class WordCell implements HtmlVisually {
 	 */
 	private float[] embeding;
 
-	/**
-	 * the type of this image
-	 */
-	private Set<CellType> types;
-
-	public WordCell(CharSequence image, int start, int end) {
+	public WordCell(Atom word, int pos, int end) {
 		super();
-		this.image = image;
-		this.start = start;
+		this.word = word;
+		this.pos = pos;
 		this.end = end;
 	}
 
@@ -53,26 +45,22 @@ public class WordCell implements HtmlVisually {
 	}
 
 	public Collection<CellType> getTypes() {
-		return types;
+		return word.getTypes();
 	}
 
 	public boolean hasType(CellType type) {
-		if (types != null && types.contains(type))
-			return true;
-		return false;
+		return word.hasType(type);
 	}
 
 	public void addType(CellType type) {
-		if (this.types == null)
-			this.types = new TreeSet<CellType>();
-		this.types.add(type);
+		this.word.addType(type);
 	}
 
 	@Override
 	public String toHtml() {
 		StringBuilder b = new StringBuilder();
-		b.append("<div class=\"cell\" title=\"").append("{st=").append(start).append(",end=").append(end)
-				.append("types=").append(types).append("}\">").append(image).append("</div>");
+		b.append("<div class=\"cell\" title=\"").append("{st=").append(pos).append(",end=").append(end).append("types=")
+				.append(getTypes()).append("}\">").append(word.image).append("</div>");
 		return b.toString();
 	}
 
