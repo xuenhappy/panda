@@ -4,10 +4,15 @@ import java.util.List;
 
 /**
  * split path map
+ * 
  * @author xuen
  *
  */
-public class SplitPathMap implements HtmlVisually{
+public class SplitPathMap implements HtmlVisually {
+
+	public SplitPathMap(CellMap cmap) {
+
+	}
 
 	@Override
 	public String toHtml() {
@@ -15,13 +20,17 @@ public class SplitPathMap implements HtmlVisually{
 		return null;
 	}
 
-	
-	
-	
-	public List<WordCell> bestPath(){
-		return  null;
+	public List<WordCell> bestPath() {
+		return null;
 	}
 	
-	
+
+	/**
+	 * Calculate shortest cut path
+	 */
+	public void optim() {
+		// TODO Auto-generated method stub
+
+	}
 
 }

@@ -64,4 +64,9 @@ public class SimpleStrList implements StrList {
 		return "SimpleStrList [alls=" + alls + "]";
 	}
 
+	public void clear() {
+		if (datas != null)
+			datas.clear();
+	}
+
 }
