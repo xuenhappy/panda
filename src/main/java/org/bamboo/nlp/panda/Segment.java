@@ -1,11 +1,14 @@
 package org.bamboo.nlp.panda;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.bamboo.nlp.panda.core.CellMap;
+import org.bamboo.nlp.panda.core.CellQuantizer;
 import org.bamboo.nlp.panda.core.CellRecognizer;
+import org.bamboo.nlp.panda.core.ShortLenCellQuantizer;
 import org.bamboo.nlp.panda.core.SplitPathMap;
 import org.bamboo.nlp.panda.core.WordCell;
 import org.bamboo.nlp.panda.source.Resource;
@@ -20,7 +23,7 @@ import org.bamboo.nlp.panda.tools.StrTools;
  * @author xuen
  *
  */
-public class Segment {
+public class Segment implements Closeable {
 
 	/**
 	 * segment conf
@@ -33,6 +36,11 @@ public class Segment {
 	private final List<CellRecognizer> cellRecognizers;
 
 	/**
+	 * this cell quantizer
+	 */
+	private final CellQuantizer quantizer;
+
+	/**
 	 * add a recognizer
 	 * 
 	 * @param recognizer
@@ -41,10 +49,17 @@ public class Segment {
 		this.cellRecognizers.add(recognizer);
 	}
 
-	public Segment(PandaConf conf) {
+	/**
+	 * init segment
+	 * 
+	 * @param conf
+	 * @param quantizer
+	 */
+	public Segment(PandaConf conf, CellQuantizer quantizer) {
 		super();
 		this.conf = conf;
 		this.cellRecognizers = new LinkedList<CellRecognizer>();
+		this.quantizer = quantizer;
 	}
 
 	/**
@@ -57,7 +72,7 @@ public class Segment {
 		AtomList cells = makeList(str);
 		CellMap cmap = buildMap(cells);
 		SplitPathMap smap = new SplitPathMap(cmap);
-		smap.optim();
+		smap.optim(this.quantizer);
 		return smap.bestPath();
 	}
 
@@ -82,7 +97,7 @@ public class Segment {
 		html.append(cmap.toHtml()).append("\n<br/><br/><br/>\n");
 		html.append("<div class=\"title-text\">Step 3: 切分图构造</div>\n");
 		SplitPathMap smap = new SplitPathMap(cmap);
-		smap.optim();
+		smap.optim(this.quantizer);
 		html.append(smap.toHtml()).append("\n<br/><br/><br/>\n");
 		html.append("<div class=\"title-text\">Step 4: 切词结果</div>\n");
 		List<WordCell> bestpath = smap.bestPath();
@@ -126,9 +141,18 @@ public class Segment {
 
 	public static void main(String[] args) throws IOException {
 		PandaConf conf = new PandaConf();
-		Segment sg = new Segment(conf);
-
+		CellQuantizer quantizer = new ShortLenCellQuantizer();
+		Segment sg = new Segment(conf, quantizer);
 		System.out.println(sg.cutShow4Html("12月23日至12月25日，明年春运火车票进入销售最高峰时段。"));
+		sg.close();
+	}
+
+	@Override
+	public void close() throws IOException {
+		for (CellRecognizer r : this.cellRecognizers)
+			r.close();
+		cellRecognizers.clear();
+		quantizer.close();
 	}
 
 }
