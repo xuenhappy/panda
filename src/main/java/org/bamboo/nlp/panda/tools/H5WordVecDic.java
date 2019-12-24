@@ -62,7 +62,7 @@ public class H5WordVecDic implements WordVecDic {
 			String[] words = this.reader.readStringArray("wds");
 			for (int i = 0; i < words.length; i++)
 				this.word_idx.put(words[i], i);
-			if (this.word_idx.size()<20001) {
+			if (this.word_idx.size()<200001) {
 				this.cache = this.reader.readFloatMatrix("ary");
 			} else {
 				this.cache = null;
