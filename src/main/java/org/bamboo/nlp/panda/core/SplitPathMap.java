@@ -10,10 +10,11 @@ import java.util.List;
  *
  */
 public class SplitPathMap implements HtmlVisually {
-	private final CellMap cmap;
 
-	public SplitPathMap(CellMap cmap) {
-		this.cmap = cmap;
+	public SplitPathMap(CellMap cmap,CellQuantizer quantizer) {
+		Iterator<WordCell> it = cmap.iterator();
+		while (it.hasNext())
+			quantizer.embededing(it.next());
 	}
 
 	@Override
@@ -31,10 +32,8 @@ public class SplitPathMap implements HtmlVisually {
 	 * 
 	 * @param quantizer
 	 */
-	public void optim(CellQuantizer quantizer) {
-		Iterator<WordCell> it = cmap.iterator();
-		while (it.hasNext())
-			quantizer.embededing(it.next());
+	public void optim() {
+		
 		
 	}
 
