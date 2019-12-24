@@ -12,6 +12,6 @@ public interface CellRecognizer {
 	 * @param baseStr
 	 * @param map
 	 */
-	public void read(WordCellList baseStr,CellMap map);
+	public void read(AtomList baseStr,CellMap map);
 
 }

@@ -9,7 +9,7 @@ import java.util.TreeSet;
  * @author xuen
  *
  */
-public final class Atom {
+public final class Atom implements HtmlVisually {
 	/**
 	 * string of data
 	 */
@@ -40,8 +40,7 @@ public final class Atom {
 		this.pos = pos;
 		this.end = end;
 	}
-	
-	
+
 	public void addType(CellType type) {
 		this.types.add(type);
 	}
@@ -49,8 +48,16 @@ public final class Atom {
 	public Set<CellType> getTypes() {
 		return types;
 	}
-	
+
 	public boolean hasType(CellType type) {
 		return types.contains(type);
+	}
+
+	@Override
+	public String toHtml() {
+		StringBuilder b = new StringBuilder();
+		b.append("<div class=\"atom\" title=\"").append("{types=").append(getTypes()).append("}\">").append(image)
+				.append("</div>");
+		return b.toString();
 	}
 }

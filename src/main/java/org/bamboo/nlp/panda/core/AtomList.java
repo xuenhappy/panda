@@ -10,11 +10,11 @@ import org.bamboo.nlp.panda.tools.StrList;
  * @author xuen
  *
  */
-public class WordCellList implements StrList, HtmlVisually {
+public class AtomList implements StrList, HtmlVisually {
 
 	private final Atom[] cells;
 
-	public WordCellList(Atom[] cells) {
+	public AtomList(Atom[] cells) {
 		super();
 		this.cells = cells;
 	}
@@ -52,7 +52,7 @@ public class WordCellList implements StrList, HtmlVisually {
 		html.append("<td style=\"background-color:#ABCDEF\">Token</td>");
 		for (int i = 0; i < size(); i++)
 			html.append(String.format("<td style=\"background-color:%s\">%s</td>", colors[i % colors.length],
-					cells[i].image));
+					cells[i].toHtml()));
 		html.append("</tr></table>");
 		return html.toString();
 	}

@@ -7,11 +7,11 @@ public final class BaseToken {
 	 * @param strs
 	 * @return
 	 */
-	public static WordCellList splitStr(CharSequence strs) {
+	public static AtomList splitStr(CharSequence strs) {
 		
 		
 		
 		
-		return new WordCellList(null);
+		return new AtomList(null);
 	}
 }
