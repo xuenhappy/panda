@@ -26,6 +26,7 @@ public class CellMap implements HtmlVisually {
 	private final Node head = new Node(null, null);
 	private int rownum;
 	private int colnum;
+	private int elenum;
 
 	public Node head() {
 		return head;
@@ -92,6 +93,7 @@ public class CellMap implements HtmlVisually {
 	public Node addNext(Node pre, WordCell cell) {
 		rownum = Math.max(rownum, cell.pos);
 		colnum = Math.max(colnum, cell.end);
+		elenum++;
 		while (pre.next != null) {
 			Node n = pre.next;
 			if (n.val.pos < cell.pos || n.val.end < cell.end) {// continue next
@@ -154,6 +156,10 @@ public class CellMap implements HtmlVisually {
 
 		}
 		return html.toString();
+	}
+	
+	public int elenum() {
+		return this.elenum;
 	}
 
 }

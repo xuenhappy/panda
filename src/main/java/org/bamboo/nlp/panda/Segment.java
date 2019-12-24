@@ -2,6 +2,7 @@ package org.bamboo.nlp.panda;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -68,12 +69,28 @@ public class Segment implements Closeable {
 	 * @param str
 	 * @return
 	 */
-	public List<WordCell> cut(CharSequence str) {
+	public List<WordCell> smart_cut(CharSequence str) {
 		AtomList cells = makeList(str);
 		CellMap cmap = buildMap(cells);
-		SplitPathMap smap = new SplitPathMap(cmap,this.quantizer);
+		SplitPathMap smap = new SplitPathMap(cmap, this.quantizer);
 		smap.optim();
 		return smap.bestPath();
+	}
+
+	/**
+	 * cut the give data
+	 * 
+	 * @param str
+	 * @return
+	 */
+	public List<WordCell> max_cut(CharSequence str) {
+		AtomList cells = makeList(str);
+		CellMap cmap = buildMap(cells);
+		LinkedList<WordCell> rs = new LinkedList<WordCell>();
+		Iterator<WordCell> it = cmap.iterator();
+		while (it.hasNext())
+			rs.add(it.next());
+		return rs;
 	}
 
 	/**
@@ -96,7 +113,7 @@ public class Segment implements Closeable {
 		CellMap cmap = buildMap(cells);
 		html.append(cmap.toHtml()).append("\n<br/><br/><br/>\n");
 		html.append("<div class=\"title-text\">Step 3: 切分图构造</div>\n");
-		SplitPathMap smap = new SplitPathMap(cmap,this.quantizer);
+		SplitPathMap smap = new SplitPathMap(cmap, this.quantizer);
 		smap.optim();
 		html.append(smap.toHtml()).append("\n<br/><br/><br/>\n");
 		html.append("<div class=\"title-text\">Step 4: 切词结果</div>\n");
