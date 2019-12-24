@@ -24,7 +24,7 @@ public class H5WordVecDic implements WordVecDic {
 	private final int dim_size;
 	private final float[][] cache;
 
-	public H5WordVecDic(String h5file, boolean cache) throws IOException {
+	public H5WordVecDic(String h5file) throws IOException {
 		IHDF5Reader reader = HDF5Factory.openForReading(h5file);
 		try {
 			// check key
@@ -62,7 +62,7 @@ public class H5WordVecDic implements WordVecDic {
 			String[] words = this.reader.readStringArray("wds");
 			for (int i = 0; i < words.length; i++)
 				this.word_idx.put(words[i], i);
-			if (cache) {
+			if (this.word_idx.size()<20001) {
 				this.cache = this.reader.readFloatMatrix("ary");
 			} else {
 				this.cache = null;
