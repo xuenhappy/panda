@@ -1,6 +1,7 @@
 package org.bamboo.nlp.panda.core;
 
 import java.io.Closeable;
+import java.io.IOException;
 
 /**
  * embeding the cell
@@ -14,7 +15,7 @@ public interface CellQuantizer extends Closeable{
 	 * @param str
 	 * @return
 	 */
-	public void embededing(WordCell cell);
+	public void embededing(WordCell cell)throws IOException;
 	
 	
 	
@@ -24,7 +25,7 @@ public interface CellQuantizer extends Closeable{
 	 * @param next
 	 * @return
 	 */
-	public double distance(WordCell pre,WordCell next);
+	public double distance(WordCell pre,WordCell next)throws IOException;
 	
 	
 	

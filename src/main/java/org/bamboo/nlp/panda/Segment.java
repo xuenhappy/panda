@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.bamboo.nlp.panda.core.CellMap;
+import org.bamboo.nlp.panda.core.CellMap.Cursor;
 import org.bamboo.nlp.panda.core.CellQuantizer;
 import org.bamboo.nlp.panda.core.CellRecognizer;
 import org.bamboo.nlp.panda.core.DictCellRecongnizer;
@@ -14,6 +15,7 @@ import org.bamboo.nlp.panda.core.ShortLenCellQuantizer;
 import org.bamboo.nlp.panda.core.SplitPathMap;
 import org.bamboo.nlp.panda.core.WordCell;
 import org.bamboo.nlp.panda.source.Resource;
+import org.bamboo.nlp.panda.core.Atom;
 import org.bamboo.nlp.panda.core.AtomList;
 import org.bamboo.nlp.panda.core.BaseLex;
 import org.bamboo.nlp.panda.tools.StrTools;
@@ -68,13 +70,15 @@ public class Segment implements Closeable {
 	 * 
 	 * @param str
 	 * @return
+	 * @throws IOException 
 	 */
-	public List<WordCell> smart_cut(CharSequence str) {
+	public List<WordCell> smart_cut(CharSequence str) throws IOException {
 		AtomList cells = makeList(str);
 		CellMap cmap = buildMap(cells);
 		SplitPathMap smap = new SplitPathMap(cmap, this.quantizer);
-		smap.optim();
-		return smap.bestPath();
+		List<WordCell> c= smap.bestPath();
+		smap.clear();
+		return c;
 	}
 
 	/**
@@ -87,9 +91,9 @@ public class Segment implements Closeable {
 		AtomList cells = makeList(str);
 		CellMap cmap = buildMap(cells);
 		LinkedList<WordCell> rs = new LinkedList<WordCell>();
-		Iterator<WordCell> it = cmap.iterator();
+		Iterator<Cursor> it = cmap.iterator();
 		while (it.hasNext())
-			rs.add(it.next());
+			rs.add(it.next().val);
 		return rs;
 	}
 
@@ -112,18 +116,17 @@ public class Segment implements Closeable {
 		html.append("<div class=\"title-text\">Step 2: Cell识别</div>\n");
 		CellMap cmap = buildMap(cells);
 		html.append(cmap.toHtml()).append("\n<br/><br/><br/>\n");
-//		html.append("<div class=\"title-text\">Step 3: 切分图构造</div>\n");
-//		SplitPathMap smap = new SplitPathMap(cmap, this.quantizer);
-//		smap.optim();
-//		html.append(smap.toHtml()).append("\n<br/><br/><br/>\n");
-//		html.append("<div class=\"title-text\">Step 4: 切词结果</div>\n");
-//		List<WordCell> bestpath = smap.bestPath();
-//		Atom[] lists = new Atom[bestpath.size()];
-//		int i = 0;
-//		for (WordCell w : bestpath)
-//			lists[i++] = w.word;
-//		bestpath.clear();
-//		html.append(new AtomList(lists)).append("\n<br/><br/><br/>\n");
+		html.append("<div class=\"title-text\">Step 3: 切分图构造</div>\n");
+		SplitPathMap smap = new SplitPathMap(cmap, this.quantizer);
+		html.append(smap.toHtml()).append("\n<br/><br/><br/>\n");
+		html.append("<div class=\"title-text\">Step 4: 切词结果</div>\n");
+		List<WordCell> bestpath = smap.bestPath();
+		Atom[] lists = new Atom[bestpath.size()];
+		int i = 0;
+		for (WordCell w : bestpath)
+			lists[i++] = w.word;
+		bestpath.clear();
+		html.append(new AtomList(lists).toHtml()).append("\n<br/><br/><br/>\n");
 		html.append("</body></html>");
 		return html.toString();
 	}

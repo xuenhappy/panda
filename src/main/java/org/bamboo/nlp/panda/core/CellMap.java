@@ -9,10 +9,17 @@ import java.util.Iterator;
  *
  */
 public class CellMap implements HtmlVisually {
+	/**
+	 * the cursor of this mat
+	 * 
+	 * @author xuen
+	 *
+	 */
 	public static class Cursor {
-		private final WordCell val;
+		public final WordCell val;
 		private Cursor next;
 		private Cursor pre;
+		private int index = -1;
 
 		public Cursor(Cursor pre, WordCell val, Cursor next) {
 			super();
@@ -20,27 +27,50 @@ public class CellMap implements HtmlVisually {
 			this.next = next;
 			this.pre = pre;
 		}
+
+		/**
+		 * the index of this node; before call this must call indexMap
+		 * 
+		 * @return
+		 */
+		public int getIndex() {
+			return index;
+		}
+
+	}
+
+	/**
+	 * index this cmap
+	 */
+	public void indexMap() {
+		Cursor node = head;
+		int index = -1;
+		while (node.next != null) {
+			node = node.next;
+			index++;
+			node.index = index;
+		}
 	}
 
 	/**
 	 * data
 	 */
 	private final Cursor head = new Cursor(null, new WordCell(null, -1, 0), null);
-	private int rownum;
-	private int colnum;
-	private int elenum;
+	private int rownum = 0;
+	private int colnum = 0;
+	private int elenum = 0;
 
 	public Cursor head() {
 		return head;
 	}
 
 	/**
-	 * iter all those data
+	 * iter the data
 	 * 
 	 * @return
 	 */
-	public Iterator<WordCell> iterator() {
-		return new Iterator<WordCell>() {
+	public Iterator<Cursor> iterator() {
+		return new Iterator<Cursor>() {
 			private Cursor node = head;
 
 			@Override
@@ -49,21 +79,24 @@ public class CellMap implements HtmlVisually {
 			}
 
 			@Override
-			public WordCell next() {
+			public Cursor next() {
 				node = node.next;
-				return node.val;
+				return node;
 			}
 		};
 	}
 
 	/**
+	 * iter the row of data from a given pos
 	 * 
-	 * @param iter row of this map
+	 * @param node
+	 * @param row
 	 * @return
 	 */
-	public Iterator<WordCell> iteratorRow(Cursor start, int row) {
-		return new Iterator<WordCell>() {
-			private Cursor _node = start;
+
+	public Iterator<Cursor> iteratorRowFrom(Cursor node, int row) {
+		return new Iterator<Cursor>() {
+			private Cursor _node = node;
 			private int _row = row;
 
 			@Override
@@ -76,10 +109,10 @@ public class CellMap implements HtmlVisually {
 			}
 
 			@Override
-			public WordCell next() {
+			public Cursor next() {
 				Cursor m = _node;
 				_node = _node.next;
-				return m.val;
+				return m;
 			}
 		};
 	}
@@ -163,18 +196,19 @@ public class CellMap implements HtmlVisually {
 		StringBuilder html = new StringBuilder();
 		String cell_str = "<td onmouseover=\"this.style.backgroundColor='#ffff66';\"onmouseout=\"this.style.backgroundColor='#d4e3e5';\">%s</td>";
 		html.append("<table class=\"hovertable\"><tr><th></th>");
+		String empty_str = String.format(cell_str, "");
 		for (int i = 1; i <= colnum; i++)
 			html.append(String.format("<th>%d</th>", i));
 		html.append("</tr>\n");
-		Iterator<WordCell> it = iterator();
+		Iterator<Cursor> it = iterator();
 		int row = -1;
 		int col = 0;
 		while (it.hasNext()) {
-			WordCell c = it.next();
+			WordCell c = it.next().val;
 			if (row < c.begin) {
 				if (row >= 0) {// full last
 					for (int j = col + 1; j <= colnum; j++)
-						html.append(String.format(cell_str, ""));
+						html.append(empty_str);
 					html.append("</tr>\n");
 
 				}
@@ -182,7 +216,7 @@ public class CellMap implements HtmlVisually {
 				for (int i = row + 1; i < c.begin; i++) {
 					html.append(String.format("<tr><th>%d</th>", i));
 					for (int j = 1; j <= colnum; j++)
-						html.append(String.format(cell_str, ""));
+						html.append(empty_str);
 					html.append("</tr>\n");
 				}
 				html.append(String.format("<tr><th>%d</th>", c.begin));
@@ -190,22 +224,46 @@ public class CellMap implements HtmlVisually {
 			}
 			// full space
 			for (int j = col + 1; j < c.end; j++)
-				html.append(String.format(cell_str, ""));
+				html.append(empty_str);
 			html.append(String.format(cell_str, c.toHtml()));
 			row = c.begin;
 			col = c.end;
 		}
 		if (row >= 0) {// full last
 			for (int j = col + 1; j <= colnum; j++)
-				html.append(String.format(cell_str, ""));
+				html.append(empty_str);
 			html.append("</tr>\n");
 
 		}
+		html.append("</table>");
 		return html.toString();
 	}
 
+	/**
+	 * this real element number of this mat
+	 * 
+	 * @return
+	 */
 	public int elenum() {
 		return this.elenum;
+	}
+
+	/**
+	 * row size
+	 * 
+	 * @return
+	 */
+	public int rowSize() {
+		return this.rownum;
+	}
+
+	/**
+	 * col size
+	 * 
+	 * @return
+	 */
+	public int colSize() {
+		return this.colnum;
 	}
 
 }
