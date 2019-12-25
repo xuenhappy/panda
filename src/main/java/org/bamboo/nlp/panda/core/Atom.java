@@ -28,9 +28,11 @@ public final class Atom implements HtmlVisually {
 	 */
 	private Set<CellType> types;
 
+	
+
 	@Override
 	public String toString() {
-		return "Atom [image=" + image + ", pos=" + begin + ", end=" + end + "]";
+		return "Atom [image=" + image + ", begin=" + begin + ", end=" + end + ", types=" + types + "]";
 	}
 
 	public Atom(String image, int pos, int end) {

@@ -6,6 +6,10 @@ public enum CellType {
 	 */
 	UNK,
 	/**
+	 * 空白
+	 */
+	SPACE,
+	/**
 	 * 普通中文字符串
 	 */
 	CHW,

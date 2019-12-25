@@ -1,5 +1,6 @@
 package org.bamboo.nlp.panda.core;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 import org.bamboo.nlp.panda.tools.StrList;
@@ -69,6 +70,7 @@ public class AtomList implements StrList, HtmlVisually {
 
 	/**
 	 * sub this atom list as a new atom
+	 * 
 	 * @param pos .inclusive.
 	 * @param end .exclusive.
 	 * @return
@@ -81,6 +83,11 @@ public class AtomList implements StrList, HtmlVisually {
 			b.append(cells[j].image);
 		}
 		return new Atom(b.toString(), cells[pos].begin, cells[end - 1].end);
+	}
+
+	@Override
+	public String toString() {
+		return "AtomList [cells=" + Arrays.toString(cells) + "]";
 	}
 
 }

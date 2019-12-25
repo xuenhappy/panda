@@ -112,18 +112,18 @@ public class Segment implements Closeable {
 		html.append("<div class=\"title-text\">Step 2: Cell识别</div>\n");
 		CellMap cmap = buildMap(cells);
 		html.append(cmap.toHtml()).append("\n<br/><br/><br/>\n");
-		html.append("<div class=\"title-text\">Step 3: 切分图构造</div>\n");
-		SplitPathMap smap = new SplitPathMap(cmap, this.quantizer);
-		smap.optim();
-		html.append(smap.toHtml()).append("\n<br/><br/><br/>\n");
-		html.append("<div class=\"title-text\">Step 4: 切词结果</div>\n");
-		List<WordCell> bestpath = smap.bestPath();
-		Atom[] lists = new Atom[bestpath.size()];
-		int i = 0;
-		for (WordCell w : bestpath)
-			lists[i++] = w.word;
-		bestpath.clear();
-		html.append(new AtomList(lists)).append("\n<br/><br/><br/>\n");
+//		html.append("<div class=\"title-text\">Step 3: 切分图构造</div>\n");
+//		SplitPathMap smap = new SplitPathMap(cmap, this.quantizer);
+//		smap.optim();
+//		html.append(smap.toHtml()).append("\n<br/><br/><br/>\n");
+//		html.append("<div class=\"title-text\">Step 4: 切词结果</div>\n");
+//		List<WordCell> bestpath = smap.bestPath();
+//		Atom[] lists = new Atom[bestpath.size()];
+//		int i = 0;
+//		for (WordCell w : bestpath)
+//			lists[i++] = w.word;
+//		bestpath.clear();
+//		html.append(new AtomList(lists)).append("\n<br/><br/><br/>\n");
 		html.append("</body></html>");
 		return html.toString();
 	}

@@ -126,7 +126,7 @@ public class CellMap implements HtmlVisually {
 		while (it.hasNext()) {
 			WordCell c = it.next();
 			if (row < c.begin) {
-				if (row > 0) {// full last
+				if (row >= 0) {// full last
 					for (int j = col + 1; j <= colnum; j++)
 						html.append(String.format(cell_str, ""));
 					html.append("</tr>");
@@ -149,7 +149,7 @@ public class CellMap implements HtmlVisually {
 			row = c.begin;
 			col = c.end;
 		}
-		if (row > 0) {// full last
+		if (row >= 0) {// full last
 			for (int j = col + 1; j <= colnum; j++)
 				html.append(String.format(cell_str, ""));
 			html.append("</tr>");
