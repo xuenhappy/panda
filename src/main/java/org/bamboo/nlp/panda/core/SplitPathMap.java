@@ -34,7 +34,7 @@ public class SplitPathMap implements HtmlVisually {
 	 */
 	public void optim() {
 		
-		
+		//TODO Calculate shortest cut path
 	}
 
 }

@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-import org.bamboo.nlp.panda.PandaConf;
 import org.bamboo.nlp.panda.source.Resource;
 import org.bamboo.nlp.panda.tools.DoubleArrayTrie;
 import org.bamboo.nlp.panda.tools.SimpleStrList;
@@ -22,11 +21,14 @@ import org.bamboo.nlp.panda.tools.SimpleStrList;
  */
 public class DictCellRecongnizer implements CellRecognizer {
 
+	/**
+	 * tire dict
+	 */
 	private final DoubleArrayTrie<CellType[]> dicts;
 
-	public DictCellRecongnizer(PandaConf conf) throws IOException {
+	public DictCellRecongnizer(String usrDict) throws IOException {
 		this.dicts = new DoubleArrayTrie<CellType[]>();
-		loadDict(conf.getConf(getClass()).getString("usr.dict.uri"));
+		loadDict(usrDict);
 	}
 
 	/**
@@ -65,6 +67,7 @@ public class DictCellRecongnizer implements CellRecognizer {
 	 * @throws IOException
 	 */
 	private void loadDict(Map<SimpleStrList, CellType[]> data, InputStream resource) throws IOException {
+		//TODO loaddata
 		resource.close();
 	}
 

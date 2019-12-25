@@ -56,9 +56,9 @@ public class Segment implements Closeable {
 	 * @param conf
 	 * @param quantizer
 	 */
-	public Segment(PandaConf conf, CellQuantizer quantizer) {
+	public Segment(boolean is_normal_str, CellQuantizer quantizer) {
 		super();
-		this.is_normal_str = conf.getConf(getClass()).getBoolean("is.normal.str");
+		this.is_normal_str = is_normal_str;
 		this.cellRecognizers = new LinkedList<CellRecognizer>();
 		this.quantizer = quantizer;
 	}
@@ -157,9 +157,8 @@ public class Segment implements Closeable {
 	}
 
 	public static void main(String[] args) throws IOException {
-		PandaConf conf = new PandaConf();
 		CellQuantizer quantizer = new ShortLenCellQuantizer();
-		Segment sg = new Segment(conf, quantizer);
+		Segment sg = new Segment(true, quantizer);
 		System.out.println(sg.cutShow4Html("12月23日至12月25日，明年春运火车票进入销售最高峰时段。"));
 		sg.close();
 	}

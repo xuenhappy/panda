@@ -9,7 +9,7 @@ public final class BaseLex {
 	 */
 	public static AtomList splitStr(CharSequence strs) {
 		
-		
+		//TODO imp split
 		
 		
 		return new AtomList(null);
