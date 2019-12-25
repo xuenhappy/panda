@@ -9,9 +9,7 @@ public final class PandaConf {
 	private JSONObject data;
 
 	public JSONObject getConf(Class<?> cls) {
-		return data.getJSONObject(cls.getName());
+		return data.getJSONObject(cls.getSimpleName().toLowerCase());
 	}
-	
-	
 
 }
