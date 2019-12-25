@@ -9,26 +9,28 @@ import java.util.Iterator;
  *
  */
 public class CellMap implements HtmlVisually {
-	public static class Node {
+	public static class Cursor {
 		private final WordCell val;
-		private Node next;
+		private Cursor next;
+		private Cursor pre;
 
-		public Node(WordCell val, Node next) {
+		public Cursor(Cursor pre, WordCell val, Cursor next) {
 			super();
 			this.val = val;
 			this.next = next;
+			this.pre = pre;
 		}
 	}
 
 	/**
 	 * data
 	 */
-	private final Node head = new Node(null, null);
+	private final Cursor head = new Cursor(null, new WordCell(null, -1, 0), null);
 	private int rownum;
 	private int colnum;
 	private int elenum;
 
-	public Node head() {
+	public Cursor head() {
 		return head;
 	}
 
@@ -39,7 +41,7 @@ public class CellMap implements HtmlVisually {
 	 */
 	public Iterator<WordCell> iterator() {
 		return new Iterator<WordCell>() {
-			private Node node = head;
+			private Cursor node = head;
 
 			@Override
 			public boolean hasNext() {
@@ -59,9 +61,9 @@ public class CellMap implements HtmlVisually {
 	 * @param iter row of this map
 	 * @return
 	 */
-	public Iterator<WordCell> iteratorRow(Node start, int row) {
+	public Iterator<WordCell> iteratorRow(Cursor start, int row) {
 		return new Iterator<WordCell>() {
-			private Node _node = start;
+			private Cursor _node = start;
 			private int _row = row;
 
 			@Override
@@ -75,7 +77,7 @@ public class CellMap implements HtmlVisually {
 
 			@Override
 			public WordCell next() {
-				Node m = _node;
+				Cursor m = _node;
 				_node = _node.next;
 				return m.val;
 			}
@@ -90,25 +92,69 @@ public class CellMap implements HtmlVisually {
 		addNext(head, cell);
 	}
 
-	public Node addNext(Node pre, WordCell cell) {
+	/**
+	 * add a new pos
+	 * 
+	 * @param now
+	 * @param cell
+	 */
+
+	public Cursor addCell(Cursor pos, WordCell cell) {
 		rownum = Math.max(rownum, cell.begin);
 		colnum = Math.max(colnum, cell.end);
 		elenum++;
-		while (pre.next != null) {
-			Node n = pre.next;
-			if (n.val.begin < cell.begin || n.val.end < cell.end) {// continue next
+		if (pos.val.begin < cell.begin || (pos.val.begin == cell.begin && pos.val.end <= cell.end))
+			return addNext(pos, cell);
+		return addPre(pos, cell);
+	}
+
+	private Cursor addPre(Cursor pre, WordCell cell) {
+		while (pre.pre != head) {
+			Cursor n = pre.pre;
+			if (n.val.begin > cell.begin) {// continue next to row
 				pre = n;
 				continue;
 			}
+			if (n.val.begin == cell.begin && n.val.end > cell.end) {// continue next to col
+				pre = n;
+				continue;
+			}
+
 			if (n.val.begin == cell.begin && n.val.end == cell.end) {// join same
 				n.val.getTypes().addAll(cell.getTypes());
 				return n;
 			}
-			Node m = new Node(cell, n);
-			pre.next = m;
+			Cursor m = new Cursor(n, cell, pre);
+			pre.pre = m;
+			n.next = m;
 			return m;
 		}
-		pre.next = new Node(cell, null);
+		pre.pre = new Cursor(head, cell, pre);
+		return pre.pre;
+	}
+
+	private Cursor addNext(Cursor pre, WordCell cell) {
+		while (pre.next != null) {
+			Cursor n = pre.next;
+			if (n.val.begin < cell.begin) {// continue next to row
+				pre = n;
+				continue;
+			}
+			if (n.val.begin == cell.begin && n.val.end < cell.end) {// continue next to col
+				pre = n;
+				continue;
+			}
+
+			if (n.val.begin == cell.begin && n.val.end == cell.end) {// join same
+				n.val.getTypes().addAll(cell.getTypes());
+				return n;
+			}
+			Cursor m = new Cursor(pre, cell, n);
+			pre.next = m;
+			n.pre = m;
+			return m;
+		}
+		pre.next = new Cursor(pre, cell, null);
 		return pre.next;
 	}
 
@@ -119,7 +165,7 @@ public class CellMap implements HtmlVisually {
 		html.append("<table class=\"hovertable\"><tr><th></th>");
 		for (int i = 1; i <= colnum; i++)
 			html.append(String.format("<th>%d</th>", i));
-		html.append("</tr>");
+		html.append("</tr>\n");
 		Iterator<WordCell> it = iterator();
 		int row = -1;
 		int col = 0;
@@ -129,7 +175,7 @@ public class CellMap implements HtmlVisually {
 				if (row >= 0) {// full last
 					for (int j = col + 1; j <= colnum; j++)
 						html.append(String.format(cell_str, ""));
-					html.append("</tr>");
+					html.append("</tr>\n");
 
 				}
 				// full skip
@@ -137,7 +183,7 @@ public class CellMap implements HtmlVisually {
 					html.append(String.format("<tr><th>%d</th>", i));
 					for (int j = 1; j <= colnum; j++)
 						html.append(String.format(cell_str, ""));
-					html.append("</tr>");
+					html.append("</tr>\n");
 				}
 				html.append(String.format("<tr><th>%d</th>", c.begin));
 				col = 0;
@@ -152,12 +198,12 @@ public class CellMap implements HtmlVisually {
 		if (row >= 0) {// full last
 			for (int j = col + 1; j <= colnum; j++)
 				html.append(String.format(cell_str, ""));
-			html.append("</tr>");
+			html.append("</tr>\n");
 
 		}
 		return html.toString();
 	}
-	
+
 	public int elenum() {
 		return this.elenum;
 	}

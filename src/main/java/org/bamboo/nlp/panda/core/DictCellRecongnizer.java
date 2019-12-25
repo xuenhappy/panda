@@ -23,7 +23,7 @@ import org.bamboo.nlp.panda.tools.SimpleStrList;
  *
  */
 public class DictCellRecongnizer implements CellRecognizer {
-	private static final Pattern DICT_SPLIT_REGEX = Pattern.compile("\t");
+	private static final Pattern DICT_SPLIT_REGEX = Pattern.compile("\\s*\\|\\|\\s*");
 	private static final Pattern TAGS_SPLIT_REGEX = Pattern.compile("\\s*,\\s*");
 
 	/**
@@ -79,11 +79,10 @@ public class DictCellRecongnizer implements CellRecognizer {
 				line = line.trim();
 				if (line.isEmpty())
 					continue;
-				line = line.toLowerCase();
 				String[] ls = DICT_SPLIT_REGEX.split(line);
 				if (ls.length != 2)
 					continue;
-				SimpleStrList s = new SimpleStrList(BaseLex.splitStr2(ls[0]));
+				SimpleStrList s = new SimpleStrList(BaseLex.splitStr2(ls[0].toLowerCase()));
 				String[] tags = TAGS_SPLIT_REGEX.split(ls[1]);
 				CellType[] ts = new CellType[tags.length];
 				for (int i = 0; i < tags.length; i++)
@@ -98,14 +97,14 @@ public class DictCellRecongnizer implements CellRecognizer {
 	@Override
 	public void read(AtomList baseStr, CellMap map) {
 		dicts.parseText(baseStr, new DoubleArrayTrie.IHit<CellType[]>() {
-			CellMap.Node head = map.head();
+			CellMap.Cursor head = map.head();
 
 			@Override
 			public boolean hit(int begin, int end, CellType[] value) {
 				Atom newAtom = baseStr.sub(begin, end);
 				for (CellType t : value)
 					newAtom.addType(t);
-				head = map.addNext(head, new WordCell(newAtom, begin, end));
+				head = map.addCell(head, new WordCell(newAtom, begin, end));
 				return true;
 			}
 		});

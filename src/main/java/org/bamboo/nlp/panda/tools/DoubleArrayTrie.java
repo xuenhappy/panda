@@ -74,8 +74,10 @@ public class DoubleArrayTrie<V> {
 		for (CharSequence seq : text) {
 			currentState = getState(currentState, getCode(seq));
 			int[] hitArray = output[currentState];
-			if (hitArray == null)
+			if (hitArray == null) {
+				++position;
 				continue;
+			}
 
 			for (int hit : hitArray) {
 				if (!processor.hit(position - l[hit], position, v[hit]))
@@ -290,10 +292,7 @@ public class DoubleArrayTrie<V> {
 		 * the next position to check unused memory
 		 */
 		private int nextCheckPos;
-		/**
-		 * the size of the key-pair sets
-		 */
-		private int keySize;
+	
 
 		/**
 		 * Build from a map
@@ -309,7 +308,7 @@ public class DoubleArrayTrie<V> {
 			// 构建二分trie树
 			addAllKeyword(keys);
 			// 在二分trie树的基础上构建双数组trie树
-			buildDoubleArrayTrie(keys.size());
+			buildDoubleArrayTrie();
 			used = null;
 			// 构建failure表并且合并output表
 			constructFailureStates();
@@ -410,9 +409,8 @@ public class DoubleArrayTrie<V> {
 			DoubleArrayTrie.this.output[targetState.getIndex()] = output;
 		}
 
-		private void buildDoubleArrayTrie(int keySize) {
+		private void buildDoubleArrayTrie() {
 			progress = 0;
-			this.keySize = keySize;
 			resize(codeMap.size() + 10);
 
 			base[0] = 1;
@@ -482,11 +480,9 @@ public class DoubleArrayTrie<V> {
 				}
 
 				begin = pos - siblings.get(0).getKey(); // 当前位置离第一个兄弟节点的距离
-				if (allocSize <= (begin + siblings.get(siblings.size() - 1).getKey())) {
-					// progress can be zero // 防止progress产生除零错误
-					double l = (1.05 > 1.0 * keySize / (progress + 1)) ? 1.05 : 1.0 * keySize / (progress + 1);
-					resize((int) (allocSize * l));
-				}
+				if (allocSize <= (begin + siblings.get(siblings.size() - 1).getKey())) 
+					resize(begin + siblings.get(siblings.size() - 1).getKey()+100);
+				
 
 				if (used[begin])
 					continue;

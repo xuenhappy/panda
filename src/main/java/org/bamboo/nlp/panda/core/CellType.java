@@ -50,6 +50,14 @@ public enum CellType {
 	/**
 	 * 机构
 	 */
-	ORG;
+	ORG,
+	/**
+	 * 量词
+	 */
+	QUANT,
+	/**
+	 * 编号与序数
+	 */
+	ORDER;
 
 }

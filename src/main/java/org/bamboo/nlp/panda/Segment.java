@@ -9,11 +9,11 @@ import java.util.List;
 import org.bamboo.nlp.panda.core.CellMap;
 import org.bamboo.nlp.panda.core.CellQuantizer;
 import org.bamboo.nlp.panda.core.CellRecognizer;
+import org.bamboo.nlp.panda.core.DictCellRecongnizer;
 import org.bamboo.nlp.panda.core.ShortLenCellQuantizer;
 import org.bamboo.nlp.panda.core.SplitPathMap;
 import org.bamboo.nlp.panda.core.WordCell;
 import org.bamboo.nlp.panda.source.Resource;
-import org.bamboo.nlp.panda.core.Atom;
 import org.bamboo.nlp.panda.core.AtomList;
 import org.bamboo.nlp.panda.core.BaseLex;
 import org.bamboo.nlp.panda.tools.StrTools;
@@ -148,9 +148,9 @@ public class Segment implements Closeable {
 	 */
 	private CellMap buildMap(AtomList cells) {
 		CellMap cmap = new CellMap();
-		CellMap.Node h = cmap.head();
+		CellMap.Cursor h = cmap.head();
 		for (int i = 0; i < cells.size(); i++)// add base data
-			h = cmap.addNext(h, new WordCell(cells.get(i), i, i + 1));
+			h = cmap.addCell(h, new WordCell(cells.get(i), i, i + 1));
 		for (CellRecognizer recognizer : this.cellRecognizers)// add other
 			recognizer.read(cells, cmap);
 		return cmap;
@@ -159,6 +159,7 @@ public class Segment implements Closeable {
 	public static void main(String[] args) throws IOException {
 		CellQuantizer quantizer = new ShortLenCellQuantizer();
 		Segment sg = new Segment(true, quantizer);
+		sg.addCellRecognizer(new DictCellRecongnizer(null));
 		System.out.println(sg.cutShow4Html("12月23日至12月25日，明年春运火车票进入销售最高峰时段。"));
 		sg.close();
 	}
