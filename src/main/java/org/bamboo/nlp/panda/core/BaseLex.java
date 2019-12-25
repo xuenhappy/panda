@@ -1,6 +1,6 @@
 package org.bamboo.nlp.panda.core;
 
-public final class BaseToken {
+public final class BaseLex {
 
 	/**
 	 * split the given data

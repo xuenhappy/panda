@@ -66,9 +66,9 @@ public class CellMap implements HtmlVisually {
 
 			@Override
 			public boolean hasNext() {
-				while (_node != null && _node.val.pos < _row)
+				while (_node != null && _node.val.begin < _row)
 					_node = _node.next;
-				if (_node != null && _node.val.pos == _row)
+				if (_node != null && _node.val.begin == _row)
 					return true;
 				return false;
 			}
@@ -91,16 +91,16 @@ public class CellMap implements HtmlVisually {
 	}
 
 	public Node addNext(Node pre, WordCell cell) {
-		rownum = Math.max(rownum, cell.pos);
+		rownum = Math.max(rownum, cell.begin);
 		colnum = Math.max(colnum, cell.end);
 		elenum++;
 		while (pre.next != null) {
 			Node n = pre.next;
-			if (n.val.pos < cell.pos || n.val.end < cell.end) {// continue next
+			if (n.val.begin < cell.begin || n.val.end < cell.end) {// continue next
 				pre = n;
 				continue;
 			}
-			if (n.val.pos == cell.pos && n.val.end == cell.end) {// join same
+			if (n.val.begin == cell.begin && n.val.end == cell.end) {// join same
 				n.val.getTypes().addAll(cell.getTypes());
 				return n;
 			}
@@ -125,7 +125,7 @@ public class CellMap implements HtmlVisually {
 		int col = 0;
 		while (it.hasNext()) {
 			WordCell c = it.next();
-			if (row < c.pos) {
+			if (row < c.begin) {
 				if (row > 0) {// full last
 					for (int j = col + 1; j <= colnum; j++)
 						html.append(String.format(cell_str, ""));
@@ -133,20 +133,20 @@ public class CellMap implements HtmlVisually {
 
 				}
 				// full skip
-				for (int i = row + 1; i < c.pos; i++) {
+				for (int i = row + 1; i < c.begin; i++) {
 					html.append(String.format("<tr><th>%d</th>", i));
 					for (int j = 1; j <= colnum; j++)
 						html.append(String.format(cell_str, ""));
 					html.append("</tr>");
 				}
-				html.append(String.format("<tr><th>%d</th>", c.pos));
+				html.append(String.format("<tr><th>%d</th>", c.begin));
 				col = 0;
 			}
 			// full space
 			for (int j = col + 1; j < c.end; j++)
 				html.append(String.format(cell_str, ""));
 			html.append(String.format(cell_str, c.toHtml()));
-			row = c.pos;
+			row = c.begin;
 			col = c.end;
 		}
 		if (row > 0) {// full last

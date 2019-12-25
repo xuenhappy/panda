@@ -15,7 +15,7 @@ import org.bamboo.nlp.panda.core.WordCell;
 import org.bamboo.nlp.panda.source.Resource;
 import org.bamboo.nlp.panda.core.Atom;
 import org.bamboo.nlp.panda.core.AtomList;
-import org.bamboo.nlp.panda.core.BaseToken;
+import org.bamboo.nlp.panda.core.BaseLex;
 import org.bamboo.nlp.panda.tools.StrTools;
 
 /**
@@ -29,7 +29,7 @@ public class Segment implements Closeable {
 	/**
 	 * segment conf
 	 */
-	private final PandaConf conf;
+	private final boolean is_normal_str;
 
 	/**
 	 * all Recognizers
@@ -58,7 +58,7 @@ public class Segment implements Closeable {
 	 */
 	public Segment(PandaConf conf, CellQuantizer quantizer) {
 		super();
-		this.conf = conf;
+		this.is_normal_str = conf.getConf(getClass()).getBoolean("is.normal.str");
 		this.cellRecognizers = new LinkedList<CellRecognizer>();
 		this.quantizer = quantizer;
 	}
@@ -135,9 +135,9 @@ public class Segment implements Closeable {
 	 * @return
 	 */
 	private AtomList makeList(CharSequence str) {
-		if (conf.isNormal_data())
+		if (is_normal_str)
 			str = StrTools.full2Half(str);
-		return BaseToken.splitStr(str);
+		return BaseLex.splitStr(str);
 	}
 
 	/**

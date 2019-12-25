@@ -17,7 +17,7 @@ public class WordCell implements HtmlVisually {
 	/**
 	 * the start in cell list
 	 */
-	public final int pos;
+	public final int begin;
 
 	/**
 	 * the end position of this string in cell list
@@ -28,11 +28,18 @@ public class WordCell implements HtmlVisually {
 	 * the embedding of this str
 	 */
 	private float[] embeding;
+	
+	
+	/**
+	 * the feature of this wordcell
+	 */
+	private int feature;
+	
 
 	public WordCell(Atom word, int pos, int end) {
 		super();
 		this.word = word;
-		this.pos = pos;
+		this.begin = pos;
 		this.end = end;
 	}
 
@@ -59,9 +66,18 @@ public class WordCell implements HtmlVisually {
 	@Override
 	public String toHtml() {
 		StringBuilder b = new StringBuilder();
-		b.append("<div class=\"cell\" title=\"").append("{st=").append(pos).append(",end=").append(end).append("types=")
+		b.append("<div class=\"cell\" title=\"").append("{st=").append(begin).append(",end=").append(end).append("types=")
 				.append(getTypes()).append("}\">").append(word.image).append("</div>");
 		return b.toString();
 	}
+
+	public int getFeature() {
+		return feature;
+	}
+
+	public void setFeature(int feature) {
+		this.feature = feature;
+	}
+
 
 }

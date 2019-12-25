@@ -1,26 +1,17 @@
 package org.bamboo.nlp.panda;
 
+import org.json.JSONObject;
+
 public final class PandaConf {
 	/**
-	 * if clear the input str to tokenizer
+	 * conf data
 	 */
-	private boolean normal_data;
+	private JSONObject data;
 
-	public boolean isNormal_data() {
-		return normal_data;
-	}
-
-	public void setNormal_data(boolean normal_data) {
-		this.normal_data = normal_data;
-	}
-
-	public String getUsrDict() {
-		// TODO Auto-generated method stub
-		return null;
+	public JSONObject getConf(Class<?> cls) {
+		return data.getJSONObject(cls.getName());
 	}
 	
-	
-
 	
 
 }

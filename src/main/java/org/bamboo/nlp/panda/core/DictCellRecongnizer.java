@@ -26,7 +26,7 @@ public class DictCellRecongnizer implements CellRecognizer {
 
 	public DictCellRecongnizer(PandaConf conf) throws IOException {
 		this.dicts = new DoubleArrayTrie<CellType[]>();
-		loadDict(conf.getUsrDict());
+		loadDict(conf.getConf(getClass()).getString("usr.dict.uri"));
 	}
 
 	/**
@@ -86,8 +86,6 @@ public class DictCellRecongnizer implements CellRecognizer {
 
 	@Override
 	public void close() throws IOException {
-		// TODO Auto-generated method stub
-		
 	}
 
 }

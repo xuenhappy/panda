@@ -80,7 +80,7 @@ public class AtomList implements StrList, HtmlVisually {
 		for (int j = pos; j < end; j++) {
 			b.append(cells[j].image);
 		}
-		return new Atom(b.toString(), cells[pos].pos, cells[end - 1].end);
+		return new Atom(b.toString(), cells[pos].begin, cells[end - 1].end);
 	}
 
 }

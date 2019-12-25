@@ -17,7 +17,7 @@ public final class Atom implements HtmlVisually {
 	/**
 	 * string start in ori data
 	 */
-	public final int pos;
+	public final int begin;
 	/**
 	 * string end in ori data
 	 */
@@ -30,14 +30,14 @@ public final class Atom implements HtmlVisually {
 
 	@Override
 	public String toString() {
-		return "Atom [image=" + image + ", pos=" + pos + ", end=" + end + "]";
+		return "Atom [image=" + image + ", pos=" + begin + ", end=" + end + "]";
 	}
 
 	public Atom(String image, int pos, int end) {
 		super();
 		this.types = new TreeSet<CellType>();
 		this.image = image;
-		this.pos = pos;
+		this.begin = pos;
 		this.end = end;
 	}
 
