@@ -136,7 +136,7 @@ public class Segment implements Closeable {
 	 */
 	private AtomList makeList(CharSequence str) {
 		if (is_normal_str)
-			str = StrTools.full2Half(str);
+			str = StrTools.full2Half(str).toLowerCase();
 		return BaseLex.splitStr(str);
 	}
 
