@@ -66,7 +66,7 @@ public class WordCell implements HtmlVisually {
 	@Override
 	public String toHtml() {
 		StringBuilder b = new StringBuilder();
-		b.append("<div class=\"cell\" title=\"").append("{st=").append(begin).append(",end=").append(end).append(",types=")
+		b.append("<div class=\"redcell\" title=\"").append("{st=").append(begin).append(",end=").append(end).append(",types=")
 				.append(getTypes()).append("}\">").append(word.image).append("</div>");
 		return b.toString();
 	}
