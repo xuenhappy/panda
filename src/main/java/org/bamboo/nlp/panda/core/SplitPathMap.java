@@ -2,6 +2,8 @@ package org.bamboo.nlp.panda.core;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -29,6 +31,7 @@ public class SplitPathMap implements HtmlVisually {
 			super();
 			this.node = node;
 			this.weight = weight;
+			assert this.weight >= 0.0;
 		}
 	}
 
@@ -37,7 +40,7 @@ public class SplitPathMap implements HtmlVisually {
 	// ori data
 	private final CellMap cellMap;
 	// best path
-	private final List<Integer> bestPaths;
+	private final LinkedList<Integer> bestPaths;
 
 	/**
 	 * buid a split path
@@ -94,7 +97,7 @@ public class SplitPathMap implements HtmlVisually {
 		StringBuilder html = new StringBuilder();
 		String cell_str = "<td onmouseover=\"this.style.backgroundColor='#ffff66';\"onmouseout=\"this.style.backgroundColor='#d4e3e5';\">%s</td>";
 		String empty_cell = String.format(cell_str, "");
-		String full_cell = String.format(cell_str, "<div class=\"cell\" title=\"%.4f\">%s</div>");
+		String full_cell = String.format(cell_str, "<div class=\"%s\" title=\"%.4f\">%s</div>");
 		html.append("<table class=\"hovertable\"><tr><th></th>");
 		for (int i = 1; i <= paths.size(); i++)
 			html.append(String.format("<th>%d</th>", i));
@@ -107,7 +110,7 @@ public class SplitPathMap implements HtmlVisually {
 		while (it.hasNext()) {
 			Cursor c = it.next();
 			fullSpace(html, row, col, 0, c.getIndex() + 1, empty_cell);
-			html.append(String.format(full_cell, 0.0, "#ST#@" + c.val.word.image));
+			html.append(String.format(full_cell, getColor(-1, c.getIndex()), 0.0, "#ST#@" + c.val.word.image));
 			row = 0;
 			col = c.getIndex() + 1;
 		}
@@ -122,13 +125,15 @@ public class SplitPathMap implements HtmlVisually {
 				Cursor next = nit.next();
 				fullSpace(html, row, col, pre.getIndex() + 1, next.getIndex() + 1, empty_cell);
 				double c = getDistance(pre.getIndex(), next.getIndex());
-				html.append(String.format(full_cell, c, pre.val.word.image + "@" + next.val.word.image));
+				html.append(String.format(full_cell, getColor(pre.getIndex(), next.getIndex()), c,
+						pre.val.word.image + "@" + next.val.word.image));
 				row = pre.getIndex() + 1;
 				col = next.getIndex() + 1;
 			}
 			if (j == 0) {
 				fullSpace(html, row, col, pre.getIndex() + 1, paths.size(), empty_cell);
-				html.append(String.format(full_cell, 0.0, pre.val.word.image + "@#ET#"));
+				html.append(String.format(full_cell, getColor(pre.getIndex(), paths.size() - 1), 0.0,
+						pre.val.word.image + "@#ET#"));
 				row = pre.getIndex() + 1;
 				col = paths.size();
 			}
@@ -140,6 +145,12 @@ public class SplitPathMap implements HtmlVisually {
 		}
 		html.append("</table>");
 		return html.toString();
+	}
+
+	private String getColor(int i, int j) {
+		if (bestPaths.contains(i) && bestPaths.contains(j))
+			return "redcell";
+		return "cell";
 	}
 
 	private double getDistance(int i, int j) {
@@ -189,6 +200,7 @@ public class SplitPathMap implements HtmlVisually {
 	 */
 	public List<WordCell> bestPath() {
 		Set<Integer> s = new HashSet<Integer>(bestPaths.size());
+		s.addAll(bestPaths);
 		List<WordCell> dat = new ArrayList<WordCell>(bestPaths.size());
 		Iterator<Cursor> it = this.cellMap.iterator();
 		while (it.hasNext()) {
@@ -205,8 +217,48 @@ public class SplitPathMap implements HtmlVisually {
 	 * @param quantizer
 	 */
 	private void optim() {
+		double[] dist = new double[paths.size()];
+		Arrays.fill(dist, -1.0);
+		int[] prev = new int[paths.size()];
+		Arrays.fill(prev, -2);
+		boolean[] S = new boolean[paths.size()];
+		Arrays.fill(S, false);
+		for (Path p : paths.get(-1)) {
+			dist[p.node] = p.weight;
+			prev[p.node] = -1;
+		}
+		// dijkstra
+		while (!S[paths.size() - 1]) {
+			double mindist = -1;
+			int u = 0;
+			for (int i = 0; i < dist.length; i++) {
+				if ((!S[i]) && (dist[i] >= 0) && (dist[i] < mindist || mindist < 0)) {
+					u = i;
+					mindist = dist[i];
+				}
+			}
+			S[u] = true;
+			if (S[paths.size() - 1]) // end point
+				break;
+			for (Path p : paths.get(u)) {
+				if (S[p.node])
+					continue;
+				double c = dist[u] + p.weight;
+				if (dist[p.node] < 0 || c < dist[p.node]) {
+					dist[p.node] = c;
+					prev[p.node] = u;
+				}
+			}
+		}
+		
+		// select
+		bestPaths.add(paths.size() - 1);
+		while (bestPaths.getLast() > -1) 
+			bestPaths.add(prev[bestPaths.getLast()]);
+		
 
-		// TODO Calculate shortest cut path
+		Collections.reverse(bestPaths);
+		
 	}
 
 	/**
