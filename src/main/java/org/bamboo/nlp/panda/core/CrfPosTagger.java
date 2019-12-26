@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.List;
 
 import org.jblas.FloatMatrix;
@@ -29,7 +30,7 @@ public class CrfPosTagger implements PosTagger {
 	 */
 	private final String[] tags;
 
-	public CrfPosTagger(String  conf_data) throws IOException {
+	public CrfPosTagger(String conf_data) throws IOException {
 		ObjectInputStream ins = new ObjectInputStream(new FileInputStream(conf_data));
 		try {
 			this.trans = new FloatMatrix((float[][]) ins.readObject());
@@ -69,13 +70,11 @@ public class CrfPosTagger implements PosTagger {
 		for (WordCell cell : tokens)
 			datas[i++] = cell.getEmbeding();
 		FloatMatrix score = new FloatMatrix(datas).mmul(map);
-		int[] tags=viterbi_decode(score);
-		i=0;
+		int[] tags = viterbi_decode(score);
+		i = 0;
 		for (WordCell cell : tokens)
 			cell.setFeature(tags[i++]);
 	}
-
-	
 
 	@Override
 	public String explain(int feature) {
@@ -86,28 +85,23 @@ public class CrfPosTagger implements PosTagger {
 	 * decode the data
 	 */
 	private int[] viterbi_decode(FloatMatrix score) {
-		/**
-		 *  trellis = np.zeros_like(score)
-		    backpointers = np.zeros_like(score, dtype=np.int32)
-		    trellis[0] = score[0]
-		    
-		    for t in xrange(1, score.shape[0]):
-		        v = np.expand_dims(trellis[t - 1], 1) + transition_params
-		        trellis[t] = score[t] + np.max(v, 0)
-		        backpointers[t] = np.argmax(v, 0)
-		    
-		    viterbi = [np.argmax(trellis[-1])]
-		    for bp in reversed(backpointers[1:]):
-		        viterbi.append(bp[viterbi[-1]])
-		    viterbi.reverse()
-		    
-		    viterbi_score = np.max(trellis[-1])
-		    return viterbi, viterbi_score
-		 */
-		//TODO imp viterbi decode
-		
-		
-		return null;
+		FloatMatrix[] trellis = new FloatMatrix[score.rows];
+		int[][] backpointers = new int[score.rows][];
+		trellis[0] = score.getRow(0);
+		backpointers[0] = new int[score.columns];
+		Arrays.fill(backpointers[0], 0);
+		for (int t = 0; t < score.rows; t++) {
+			FloatMatrix v = trans.addRowVector(trellis[t - 1]);
+			trellis[t] = score.getRow(t).addi(v.columnMaxs());
+			backpointers[t] = v.columnArgmaxs();
+		}
+
+		int[] viterbi = new int[score.rows];
+		viterbi[viterbi.length - 1] = trellis[viterbi.length - 1].argmax();
+		for (int j = viterbi.length - 2; j >= 0; j--)
+			viterbi[j] = backpointers[j + 1][viterbi[j + 1]];
+		// float viterbi_score=trellis[trellis.length-1].max();
+		return viterbi;
 	}
 
 }
