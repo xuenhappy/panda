@@ -163,7 +163,8 @@ public class Segment implements Closeable {
 		CellQuantizer quantizer = new ShortLenCellQuantizer();
 		Segment sg = new Segment(true, quantizer);
 		sg.addCellRecognizer(new DictCellRecongnizer(null));
-		System.out.println(sg.cutShow4Html("12月23日至12月25日，明年春运火车票进入销售最高峰时段。"));
+		String html=sg.cutShow4Html("12月23日至12月25日，明年春运火车票进入销售最高峰时段。");
+		System.out.println(html);
 		sg.close();
 	}
 

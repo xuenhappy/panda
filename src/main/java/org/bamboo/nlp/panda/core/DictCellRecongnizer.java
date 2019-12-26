@@ -7,14 +7,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Map;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.bamboo.nlp.panda.source.Resource;
 import org.bamboo.nlp.panda.tools.DoubleArrayTrie;
-import org.bamboo.nlp.panda.tools.SimpleStrList;
+import org.bamboo.nlp.panda.tools.StrList;
 
 /**
  * 基于trie词典的方式识别基本单元
@@ -25,6 +28,41 @@ import org.bamboo.nlp.panda.tools.SimpleStrList;
 public class DictCellRecongnizer implements CellRecognizer {
 	private static final Pattern DICT_SPLIT_REGEX = Pattern.compile("\\s*\\|\\|\\s*");
 	private static final Pattern TAGS_SPLIT_REGEX = Pattern.compile("\\s*,\\s*");
+
+	private static final class StrArray implements StrList {
+		private final ArrayList<String> datas;
+
+		public StrArray(ArrayList<String> datas) {
+			this.datas = datas;
+		}
+
+		@Override
+		public Iterator<CharSequence> iterator() {
+			final Iterator<String> c = datas.iterator();
+			return new Iterator<CharSequence>() {
+
+				@Override
+				public boolean hasNext() {
+					return c.hasNext();
+				}
+
+				@Override
+				public CharSequence next() {
+					return c.next();
+				}
+			};
+		}
+
+		@Override
+		public int size() {
+			return datas.size();
+		}
+
+		public void clear() {
+			datas.clear();
+		}
+
+	}
 
 	/**
 	 * tire dict
@@ -43,22 +81,16 @@ public class DictCellRecongnizer implements CellRecognizer {
 	 * @throws IOException
 	 */
 	private void loadDict(String usrDict) throws IOException {
-		Map<SimpleStrList, CellType[]> data = new HashMap<SimpleStrList, CellType[]>();
-		loadDict(data, Resource.getResource(Resource.INNER_WORD_DICT));
+		LinkedList<CellType[]> vals = new LinkedList<CellType[]>();
+		LinkedList<StrArray> keys = new LinkedList<StrArray>();
+		loadDict(keys, vals, Resource.getResource(Resource.INNER_WORD_DICT));
 		if (usrDict != null && !usrDict.isEmpty()) {
 			File file = new File(URI.create(usrDict));
-			loadDict(data, new FileInputStream(file));
+			loadDict(keys, vals, new FileInputStream(file));
 		} // load usr dict
-		LinkedList<CellType[]> vals = new LinkedList<CellType[]>();
-		LinkedList<SimpleStrList> keys = new LinkedList<SimpleStrList>();
-		for (Map.Entry<SimpleStrList, CellType[]> ent : data.entrySet()) {
-			vals.add(ent.getValue());
-			keys.add(ent.getKey());
-		}
 		this.dicts.build(keys, vals);
 		// clear data
-		data.clear();
-		for (SimpleStrList s : keys)
+		for (StrArray s : keys)
 			s.clear();
 		keys.clear();
 		vals.clear();
@@ -71,10 +103,11 @@ public class DictCellRecongnizer implements CellRecognizer {
 	 * @param resource
 	 * @throws IOException
 	 */
-	private void loadDict(Map<SimpleStrList, CellType[]> data, InputStream resource) throws IOException {
+	private void loadDict(List<StrArray> keys, List<CellType[]> vals, InputStream resource) throws IOException {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(resource, "utf-8"), 1024 * 5);
 		try {
 			String line;
+			Set<String> tmp = new HashSet<String>();
 			while ((line = reader.readLine()) != null) {
 				line = line.trim();
 				if (line.isEmpty())
@@ -82,13 +115,21 @@ public class DictCellRecongnizer implements CellRecognizer {
 				String[] ls = DICT_SPLIT_REGEX.split(line);
 				if (ls.length != 2)
 					continue;
-				SimpleStrList s = new SimpleStrList(BaseLex.splitStr2(ls[0].toLowerCase()));
+				String key = ls[0].toLowerCase();
+				if (tmp.contains(key))
+					continue;
+				tmp.add(key);
+				ArrayList<String> keyary = BaseLex.splitStr2(key);
+				if (keyary.size() < 2)
+					continue;
 				String[] tags = TAGS_SPLIT_REGEX.split(ls[1]);
 				CellType[] ts = new CellType[tags.length];
 				for (int i = 0; i < tags.length; i++)
 					ts[i] = CellType.valueOf(tags[i]);
-				data.put(s, ts);
+				keys.add(new StrArray(keyary));
+				vals.add(ts);
 			}
+			tmp.clear();
 		} finally {
 			reader.close();
 		}

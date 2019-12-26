@@ -45,15 +45,19 @@ public class DoubleArrayTrie<V> {
 	 * 
 	 * @param datas
 	 */
-	protected void buildCodeMap(List<? extends StrList> datas) {
+	protected int buildCodeMap(List<? extends StrList> datas) {
+		int max_code = 0;
 		if (codeMap == null)
-			codeMap = new HashMap<CharSequence, Integer>(datas.size() / 3 + 10);
-		for (StrList ent : datas)
+			codeMap = new HashMap<CharSequence, Integer>(2000);
+		for (StrList ent : datas) {
 			for (CharSequence seq : ent) {
 				if (codeMap.containsKey(seq))
 					continue;
 				codeMap.put(seq, codeMap.size() + 1);
 			}
+			max_code += ent.size();
+		}
+		return max_code + datas.size();
 	}
 
 	protected Integer getCode(CharSequence seq) {
@@ -177,8 +181,6 @@ public class DoubleArrayTrie<V> {
 		return newCurrentState;
 	}
 
-
-
 	/**
 	 * transition of a state, if the state is root and it failed, then returns the
 	 * root
@@ -292,7 +294,6 @@ public class DoubleArrayTrie<V> {
 		 * the next position to check unused memory
 		 */
 		private int nextCheckPos;
-	
 
 		/**
 		 * Build from a map
@@ -302,13 +303,13 @@ public class DoubleArrayTrie<V> {
 		@SuppressWarnings("unchecked")
 		public void build(List<? extends StrList> keys, List<V> tags) {
 			assert keys.size() == tags.size();
-			buildCodeMap(keys);
+			int max_code = buildCodeMap(keys);
 			v = (V[]) tags.toArray();
 			l = new int[v.length];
 			// 构建二分trie树
 			addAllKeyword(keys);
 			// 在二分trie树的基础上构建双数组trie树
-			buildDoubleArrayTrie();
+			buildDoubleArrayTrie(max_code);
 			used = null;
 			// 构建failure表并且合并output表
 			constructFailureStates();
@@ -409,15 +410,13 @@ public class DoubleArrayTrie<V> {
 			DoubleArrayTrie.this.output[targetState.getIndex()] = output;
 		}
 
-		private void buildDoubleArrayTrie() {
+		private void buildDoubleArrayTrie(int max_code) {
 			progress = 0;
-			resize(codeMap.size() + 10);
-
+			resize(max_code + 10);
+			// init data
 			base[0] = 1;
 			nextCheckPos = 0;
-
 			State root_node = this.rootState;
-
 			List<Map.Entry<Integer, State>> siblings = new ArrayList<Map.Entry<Integer, State>>(
 					root_node.getSuccess().entrySet().size());
 			fetch(root_node, siblings);
@@ -480,9 +479,8 @@ public class DoubleArrayTrie<V> {
 				}
 
 				begin = pos - siblings.get(0).getKey(); // 当前位置离第一个兄弟节点的距离
-				if (allocSize <= (begin + siblings.get(siblings.size() - 1).getKey())) 
-					resize(begin + siblings.get(siblings.size() - 1).getKey()+100);
-				
+				if (allocSize <= (begin + siblings.get(siblings.size() - 1).getKey()))
+					resize(begin + siblings.get(siblings.size() - 1).getKey() + 100);
 
 				if (used[begin])
 					continue;
@@ -494,12 +492,6 @@ public class DoubleArrayTrie<V> {
 				break;
 			}
 
-			// -- Simple heuristics --
-			// if the percentage of non-empty contents in check between the
-			// index
-			// 'next_check_pos' and 'check' is greater than some constant value
-			// (e.g. 0.9),
-			// new 'next_check_pos' index is written by 'check'.
 			if (1.0 * nonzero_num / (pos - nextCheckPos + 1) >= 0.95)
 				nextCheckPos = pos; // 从位置 next_check_pos 开始到 pos 间，如果已占用的空间在95%以上，下次插入节点时，直接从 pos 位置处开始查找
 			used[begin] = true;
@@ -515,12 +507,12 @@ public class DoubleArrayTrie<V> {
 				List<Map.Entry<Integer, State>> new_siblings = new ArrayList<Map.Entry<Integer, State>>(
 						sibling.getValue().getSuccess().entrySet().size() + 1);
 
-				if (fetch(sibling.getValue(), new_siblings) == 0) // 一个词的终止且不为其他词的前缀，其实就是叶子节点
+				if (fetch(sibling.getValue(), new_siblings) == 0) // 叶子节点
 				{
 					base[begin + sibling.getKey()] = (-sibling.getValue().getLargestValueId() - 1);
 					progress++;
 				} else {
-					int h = insert(new_siblings); // dfs
+					int h = insert(new_siblings); // deep visit
 					base[begin + sibling.getKey()] = h;
 				}
 				sibling.getValue().setIndex(begin + sibling.getKey());
@@ -532,11 +524,10 @@ public class DoubleArrayTrie<V> {
 		 * free the unnecessary memory
 		 */
 		private void loseWeight() {
-			int[] nbase = new int[size + 65535];
+			int[] nbase = new int[size + codeMap.size() + 1];
 			System.arraycopy(base, 0, nbase, 0, size);
 			base = nbase;
-
-			int[] ncheck = new int[size + 65535];
+			int[] ncheck = new int[size + codeMap.size() + 1];
 			System.arraycopy(check, 0, ncheck, 0, size);
 			check = ncheck;
 		}
