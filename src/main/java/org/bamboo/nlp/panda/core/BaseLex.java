@@ -5,7 +5,11 @@ import java.util.LinkedList;
 
 import org.bamboo.nlp.panda.tools.StrTools;
 import org.bamboo.nlp.panda.tools.StrTools.CharType;
-
+/**
+ * split a string to base atom that the string can not split any more!
+ * @author xuen
+ *
+ */
 public final class BaseLex {
 
 	/**
@@ -54,6 +58,11 @@ public final class BaseLex {
 		return new AtomList(tmp.toArray(new Atom[tmp.size()]));
 	}
 
+	/**
+	 * the same split
+	 * @param str
+	 * @return
+	 */
 	public static ArrayList<String> splitStr2(CharSequence str) {
 		ArrayList<String> tmp = new ArrayList<String>(str.length());
 		StringBuilder buf = new StringBuilder();
