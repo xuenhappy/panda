@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.util.Arrays;
 import java.util.List;
 
 import org.jblas.FloatMatrix;
@@ -88,9 +87,7 @@ public class CrfPosTagger implements PosTagger {
 		FloatMatrix[] trellis = new FloatMatrix[score.rows];
 		int[][] backpointers = new int[score.rows][];
 		trellis[0] = score.getRow(0);
-		backpointers[0] = new int[score.columns];
-		Arrays.fill(backpointers[0], 0);
-		for (int t = 0; t < score.rows; t++) {
+		for (int t = 1; t < score.rows; t++) {
 			FloatMatrix v = trans.addRowVector(trellis[t - 1]);
 			trellis[t] = score.getRow(t).addi(v.columnMaxs());
 			backpointers[t] = v.columnArgmaxs();
