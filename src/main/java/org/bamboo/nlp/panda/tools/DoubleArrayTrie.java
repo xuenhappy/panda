@@ -2,6 +2,13 @@ package org.bamboo.nlp.panda.tools;
 
 import java.util.*;
 
+
+/**
+ * a double array trie 
+ * @author xuen
+ *
+ * @param <V>
+ */
 public class DoubleArrayTrie<V> {
 
 	/**
