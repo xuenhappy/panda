@@ -57,8 +57,8 @@ public class CrfPosTagger implements PosTagger {
 	 */
 	public void save(OutputStream out) throws IOException {
 		ObjectOutputStream o = new ObjectOutputStream(out);
-		o.writeObject(trans);
-		o.writeObject(map);
+		o.writeObject(trans.toArray2());
+		o.writeObject(map.toArray2());
 		o.writeObject(tags);
 	}
 
