@@ -75,7 +75,7 @@ public class Segment implements Closeable {
 	public List<WordCell> smart_cut(CharSequence str) throws IOException {
 		AtomList cells = makeList(str);
 		CellMap cmap = buildMap(cells);
-		SplitPathMap smap = new SplitPathMap(cmap, this.quantizer);
+		SplitPathMap smap = new SplitPathMap(cmap, this.quantizer,cells);
 		List<WordCell> c= smap.bestPath();
 		smap.clear();
 		return c;
@@ -117,7 +117,7 @@ public class Segment implements Closeable {
 		CellMap cmap = buildMap(cells);
 		html.append(cmap.toHtml()).append("\n<br/><br/><br/>\n");
 		html.append("<div class=\"title-text\">Step 3: 切分图构造</div>\n");
-		SplitPathMap smap = new SplitPathMap(cmap, this.quantizer);
+		SplitPathMap smap = new SplitPathMap(cmap, this.quantizer,cells);
 		html.append(smap.toHtml()).append("\n<br/><br/><br/>\n");
 		html.append("<div class=\"title-text\">Step 4: 切词结果</div>\n");
 		List<WordCell> bestpath = smap.bestPath();

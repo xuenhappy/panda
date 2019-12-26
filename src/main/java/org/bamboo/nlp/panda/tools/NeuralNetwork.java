@@ -1,5 +1,11 @@
 package org.bamboo.nlp.panda.tools;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+
 import org.jblas.FloatMatrix;
 import org.jblas.MatrixFunctions;
 
@@ -70,10 +76,13 @@ public final class NeuralNetwork {
 	 * @author xuen
 	 *
 	 */
-	public static final class TDense {
-		private final Activation activation;
-		private final FloatMatrix weight;
-		private final FloatMatrix blas;
+	public static final class TDense implements IOSerializable {
+		private Activation activation;
+		private FloatMatrix weight;
+		private FloatMatrix blas;
+
+		public TDense() {
+		}
 
 		public TDense(FloatMatrix weight, FloatMatrix blas, Activation activation) {
 			this.activation = activation;
@@ -90,6 +99,33 @@ public final class NeuralNetwork {
 			return val;
 		}
 
+		@Override
+		public void load(InputStream in) throws IOException {
+			ObjectInputStream ins = new ObjectInputStream(in);
+			try {
+				float[][] w = (float[][]) ins.readObject();
+				float[][] v = (float[][]) ins.readObject();
+				this.activation = (Activation) ins.readObject();
+				this.weight = new FloatMatrix(w);
+				if (v != null)
+					this.blas = new FloatMatrix(v);
+			} catch (ClassNotFoundException e) {
+				throw new IOException(e.getMessage());
+			}
+
+		}
+
+		@Override
+		public void save(OutputStream out) throws IOException {
+			ObjectOutputStream outs = new ObjectOutputStream(out);
+			outs.writeObject(weight.toArray2());
+			if (blas != null)
+				outs.writeObject(blas.toArray2());
+			else
+				outs.writeObject(null);
+			outs.writeObject(activation);
+		}
+
 	}
 
 	/**
@@ -98,11 +134,11 @@ public final class NeuralNetwork {
 	 * @author xuen
 	 *
 	 */
-	public static final class TGRU {
-		private final FloatMatrix wIh;
-		private final FloatMatrix wHh;
-		private final FloatMatrix bIh;
-		private final FloatMatrix bHh;
+	public static final class TGRU implements IOSerializable {
+		private FloatMatrix wIh;
+		private FloatMatrix wHh;
+		private FloatMatrix bIh;
+		private FloatMatrix bHh;
 
 		/**
 		 * 
@@ -145,24 +181,79 @@ public final class NeuralNetwork {
 			this.bIh = bIh;
 		}
 
+		public TGRU() {
+		}
+
 		public int GetStateSize() {
 			return this.wHh.rows;
 		}
 
 		/**
-		 * input size is [time_step,vec_size]
+		 * input size is [time_step,1,vec_size]
 		 * 
 		 * @param input
 		 * @return
 		 */
-		public FloatMatrix runRnn(FloatMatrix input) {
-			FloatMatrix outputs = new FloatMatrix(input.rows, this.GetStateSize());
+		public FloatMatrix[] runRnn(FloatMatrix[] input) {
+			FloatMatrix[] outputs = new FloatMatrix[input.length];
 			FloatMatrix state = this.zeroState(1);
-			for (int i = 0; i < input.rows; i++) {
-				state = forward(input.getRow(i), state);// update state
-				outputs.putRow(i, state);// copy state data
+			for (int i = 0; i < input.length; i++) {
+				state = forward(input[i], state);// update state
+				outputs[i] = state.dup();// copy state data
 			}
 			return outputs;
+		}
+
+		/**
+		 * reverse run rnn cell input size is [time_step,1,vec_size]
+		 * 
+		 * @param input
+		 * @return
+		 */
+		public FloatMatrix[] reverseRunRnn(FloatMatrix[] input) {
+			FloatMatrix[] outputs = new FloatMatrix[input.length];
+			FloatMatrix state = this.zeroState(1);
+			for (int i = input.length - 1; i >= 0; i--) {
+				state = forward(input[i], state);// update state
+				outputs[i] = state.dup();// copy state data
+			}
+			return outputs;
+		}
+
+		@Override
+		public void load(InputStream in) throws IOException {
+			ObjectInputStream ins = new ObjectInputStream(in);
+			try {
+				float[][] w1 = (float[][]) ins.readObject();
+				float[][] w2 = (float[][]) ins.readObject();
+				float[][] b1 = (float[][]) ins.readObject();
+				float[][] b2 = (float[][]) ins.readObject();
+
+				this.wHh = new FloatMatrix(w1);
+				this.wIh = new FloatMatrix(w2);
+				if (b1 != null)
+					this.bHh = new FloatMatrix(b1);
+				if (b2 != null)
+					this.bIh = new FloatMatrix(b2);
+			} catch (ClassNotFoundException e) {
+				throw new IOException(e.getMessage());
+			}
+
+		}
+
+		@Override
+		public void save(OutputStream out) throws IOException {
+			ObjectOutputStream outs = new ObjectOutputStream(out);
+			outs.writeObject(wHh.toArray2());
+			outs.writeObject(wIh.toArray2());
+			if (bHh != null)
+				outs.writeObject(bHh.toArray2());
+			else
+				outs.writeObject(null);
+			if (bIh != null)
+				outs.writeObject(bIh.toArray2());
+			else
+				outs.writeObject(null);
 		}
 	}
 

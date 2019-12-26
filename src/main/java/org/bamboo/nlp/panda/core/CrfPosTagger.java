@@ -2,11 +2,13 @@ package org.bamboo.nlp.panda.core;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.util.List;
 
+import org.bamboo.nlp.panda.tools.IOSerializable;
 import org.jblas.FloatMatrix;
 
 /**
@@ -15,29 +17,24 @@ import org.jblas.FloatMatrix;
  * @author xuen
  *
  */
-public class CrfPosTagger implements PosTagger {
+public class CrfPosTagger implements PosTagger, IOSerializable {
 	/**
 	 * tag trans param
 	 */
-	private final FloatMatrix trans;
+	private FloatMatrix trans;
 	/**
 	 * tag embedding map
 	 */
-	private final FloatMatrix map;
+	private FloatMatrix map;
 	/**
 	 * tags explain
 	 */
-	private final String[] tags;
+	private String[] tags;
 
 	public CrfPosTagger(String conf_data) throws IOException {
-		ObjectInputStream ins = new ObjectInputStream(new FileInputStream(conf_data));
+		FileInputStream ins = new FileInputStream(conf_data);
 		try {
-			this.trans = new FloatMatrix((float[][]) ins.readObject());
-			this.map = new FloatMatrix((float[][]) ins.readObject());
-			this.tags = (String[]) ins.readObject();
-			assert tags.length==this.map.columns;
-		} catch (ClassNotFoundException e) {
-			throw new IOException("data not for model :" + e.getMessage());
+			load(ins);
 		} finally {
 			ins.close();
 		}
@@ -47,7 +44,7 @@ public class CrfPosTagger implements PosTagger {
 		this.trans = new FloatMatrix(trans);
 		this.map = new FloatMatrix(map);
 		this.tags = tags;
-		assert tags.length==this.map.columns;
+		assert tags.length == this.map.columns;
 	}
 
 	/**
@@ -100,6 +97,20 @@ public class CrfPosTagger implements PosTagger {
 			viterbi[j] = backpointers[j + 1][viterbi[j + 1]];
 		// float viterbi_score=trellis[trellis.length-1].max();
 		return viterbi;
+	}
+
+	@Override
+	public void load(InputStream in) throws IOException {
+		ObjectInputStream ins = new ObjectInputStream(in);
+		try {
+			this.trans = new FloatMatrix((float[][]) ins.readObject());
+			this.map = new FloatMatrix((float[][]) ins.readObject());
+			this.tags = (String[]) ins.readObject();
+			assert tags.length == this.map.columns;
+		} catch (ClassNotFoundException e) {
+			throw new IOException("data not for model :" + e.getMessage());
+		}
+
 	}
 
 }

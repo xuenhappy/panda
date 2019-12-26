@@ -14,10 +14,15 @@ import org.bamboo.nlp.panda.tools.StrList;
 public class AtomList implements StrList, HtmlVisually {
 
 	private final Atom[] cells;
+	private final int char_len;
 
 	public AtomList(Atom[] cells) {
 		super();
 		this.cells = cells;
+		int len=0;
+		for(Atom a:cells)
+			len+=a.image.length();
+		this.char_len=len;
 	}
 
 	@Override
@@ -88,6 +93,14 @@ public class AtomList implements StrList, HtmlVisually {
 	@Override
 	public String toString() {
 		return "AtomList [cells=" + Arrays.toString(cells) + "]";
+	}
+	
+	/**
+	 * the real len of the seq
+	 * @return
+	 */
+	public int charLen() {
+		return char_len;
 	}
 
 }

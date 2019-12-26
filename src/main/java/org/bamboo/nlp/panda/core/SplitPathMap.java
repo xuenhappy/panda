@@ -49,11 +49,11 @@ public class SplitPathMap implements HtmlVisually {
 	 * @param quantizer
 	 * @throws IOException
 	 */
-	public SplitPathMap(CellMap cmap, CellQuantizer quantizer) throws IOException {
+	public SplitPathMap(CellMap cmap, CellQuantizer quantizer,AtomList context) throws IOException {
 		this.bestPaths = new LinkedList<Integer>();
 		this.cellMap = cmap;
 		this.paths = new HashMap<Integer, List<Path>>(cmap.elenum() + 2);
-		buidPaths(quantizer);
+		buidPaths(quantizer,context);
 		optim();
 	}
 
@@ -63,13 +63,11 @@ public class SplitPathMap implements HtmlVisually {
 	 * @param quantizer
 	 * @throws IOException
 	 */
-	private void buidPaths(CellQuantizer quantizer) throws IOException {
+	private void buidPaths(CellQuantizer quantizer,AtomList context) throws IOException {
 		cellMap.indexMap();// set index
-		Iterator<Cursor> it = cellMap.iterator();
-		while (it.hasNext())
-			quantizer.embededing(it.next().val);
+		quantizer.embed(cellMap, context);
 		// add head
-		it = cellMap.iteratorRowFrom(cellMap.head(), 0);
+		Iterator<Cursor> it = cellMap.iteratorRowFrom(cellMap.head(), 0);
 		List<Path> p = new LinkedList<SplitPathMap.Path>();
 		while (it.hasNext())
 			p.add(new Path(it.next().getIndex(), 0));

@@ -14,7 +14,7 @@ public class ShortLenCellQuantizer  implements CellQuantizer{
 	}
 
 	@Override
-	public void embededing(WordCell cell) {
+	public void embed(CellMap cells,AtomList context) {
 	}
 
 	@Override
