@@ -83,10 +83,11 @@ public class DictCellRecongnizer implements CellRecognizer {
 	private void loadDict(String usrDict) throws IOException {
 		LinkedList<CellType[]> vals = new LinkedList<CellType[]>();
 		LinkedList<StrArray> keys = new LinkedList<StrArray>();
-		loadDict(keys, vals, Resource.getResource(Resource.INNER_WORD_DICT));
+		Set<String> dup = new HashSet<String>();
+		loadDict(keys, vals, Resource.getResource(Resource.INNER_WORD_DICT),dup);
 		if (usrDict != null && !usrDict.isEmpty()) {
 			File file = new File(URI.create(usrDict));
-			loadDict(keys, vals, new FileInputStream(file));
+			loadDict(keys, vals, new FileInputStream(file),dup);
 		} // load usr dict
 		this.dicts.build(keys, vals);
 		// clear data
@@ -94,6 +95,7 @@ public class DictCellRecongnizer implements CellRecognizer {
 			s.clear();
 		keys.clear();
 		vals.clear();
+		dup.clear();
 	}
 
 	/**
@@ -103,11 +105,10 @@ public class DictCellRecongnizer implements CellRecognizer {
 	 * @param resource
 	 * @throws IOException
 	 */
-	private void loadDict(List<StrArray> keys, List<CellType[]> vals, InputStream resource) throws IOException {
+	private void loadDict(List<StrArray> keys, List<CellType[]> vals, InputStream resource,Set<String> dup) throws IOException {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(resource, "utf-8"), 1024 * 5);
 		try {
 			String line;
-			Set<String> tmp = new HashSet<String>();
 			while ((line = reader.readLine()) != null) {
 				line = line.trim();
 				if (line.isEmpty())
@@ -116,9 +117,9 @@ public class DictCellRecongnizer implements CellRecognizer {
 				if (ls.length != 2)
 					continue;
 				String key = ls[0].toLowerCase();
-				if (tmp.contains(key))
+				if (dup.contains(key))
 					continue;
-				tmp.add(key);
+				dup.add(key);
 				ArrayList<String> keyary = BaseLex.splitStr2(key);
 				if (keyary.size() < 2)
 					continue;
@@ -129,7 +130,6 @@ public class DictCellRecongnizer implements CellRecognizer {
 				keys.add(new StrArray(keyary));
 				vals.add(ts);
 			}
-			tmp.clear();
 		} finally {
 			reader.close();
 		}

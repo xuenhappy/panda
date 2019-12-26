@@ -35,6 +35,7 @@ public class CrfPosTagger implements PosTagger {
 			this.trans = new FloatMatrix((float[][]) ins.readObject());
 			this.map = new FloatMatrix((float[][]) ins.readObject());
 			this.tags = (String[]) ins.readObject();
+			assert tags.length==this.map.columns;
 		} catch (ClassNotFoundException e) {
 			throw new IOException("data not for model :" + e.getMessage());
 		} finally {
@@ -43,10 +44,10 @@ public class CrfPosTagger implements PosTagger {
 	}
 
 	public CrfPosTagger(float[][] trans, float[][] map, String[] tags) {
-		super();
 		this.trans = new FloatMatrix(trans);
 		this.map = new FloatMatrix(map);
 		this.tags = tags;
+		assert tags.length==this.map.columns;
 	}
 
 	/**
