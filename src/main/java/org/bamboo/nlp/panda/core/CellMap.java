@@ -135,7 +135,6 @@ public class CellMap implements HtmlVisually {
 	public Cursor addCell(Cursor pos, WordCell cell) {
 		rownum = Math.max(rownum, cell.begin);
 		colnum = Math.max(colnum, cell.end);
-		elenum++;
 		if (pos.val.begin < cell.begin || (pos.val.begin == cell.begin && pos.val.end <= cell.end))
 			return addNext(pos, cell);
 		return addPre(pos, cell);
@@ -158,11 +157,13 @@ public class CellMap implements HtmlVisually {
 				return n;
 			}
 			Cursor m = new Cursor(n, cell, pre);
+			elenum++;
 			pre.pre = m;
 			n.next = m;
 			return m;
 		}
 		pre.pre = new Cursor(head, cell, pre);
+		elenum++;
 		return pre.pre;
 	}
 
@@ -183,11 +184,13 @@ public class CellMap implements HtmlVisually {
 				return n;
 			}
 			Cursor m = new Cursor(pre, cell, n);
+			elenum++;
 			pre.next = m;
 			n.pre = m;
 			return m;
 		}
 		pre.next = new Cursor(pre, cell, null);
+		elenum++;
 		return pre.next;
 	}
 

@@ -19,10 +19,10 @@ public class AtomList implements StrList, HtmlVisually {
 	public AtomList(Atom[] cells) {
 		super();
 		this.cells = cells;
-		int len=0;
-		for(Atom a:cells)
-			len+=a.image.length();
-		this.char_len=len;
+		int len = 0;
+		if (cells.length > 0)// last end is the length
+			len = cells[cells.length - 1].end;
+		this.char_len = len;
 	}
 
 	@Override
@@ -94,9 +94,10 @@ public class AtomList implements StrList, HtmlVisually {
 	public String toString() {
 		return "AtomList [cells=" + Arrays.toString(cells) + "]";
 	}
-	
+
 	/**
 	 * the real len of the seq
+	 * 
 	 * @return
 	 */
 	public int charLen() {
