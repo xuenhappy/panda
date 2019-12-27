@@ -30,6 +30,11 @@ public enum CellType {
 	 */
 	NUM,
 	/**
+	 * 中文数字
+	 */
+	CCNUM,
+
+	/**
 	 * 日期
 	 */
 	DATE,
