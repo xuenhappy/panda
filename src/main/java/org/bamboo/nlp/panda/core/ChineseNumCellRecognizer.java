@@ -15,11 +15,11 @@ import org.bamboo.nlp.panda.core.CellMap.Cursor;
  */
 public class ChineseNumCellRecognizer implements CellRecognizer {
 	private final static CharSequence[] CHINESE_NUM = "一二三四五六七八九壹贰叁肆伍陆柒捌玖".split("");
-	private final static CharSequence[] CHINESE_Q = "零十百拾佰千万亿".split("");
-	private final static CharSequence CHINESE_POINT = "点";
+	private final static CharSequence[] CHINESE_UNIT = "零十百拾佰千仟万萬亿".split("");
+	private final static String CHINESE_POINT = "点";
 	static {
 		Arrays.sort(CHINESE_NUM);
-		Arrays.sort(CHINESE_Q);
+		Arrays.sort(CHINESE_UNIT);
 	}
 
 	private static final class Buffer {
@@ -36,7 +36,16 @@ public class ChineseNumCellRecognizer implements CellRecognizer {
 	}
 
 	protected static interface Action {
-		public void dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos);
+		/**
+		 * do this action and seek to the next index
+		 * 
+		 * @param buffer
+		 * @param baseStr
+		 * @param map
+		 * @param pos
+		 * @return
+		 */
+		public int dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos);
 	}
 
 	private static final class State {
@@ -54,23 +63,24 @@ public class ChineseNumCellRecognizer implements CellRecognizer {
 	private static final Map<Integer, State> root = new TreeMap<Integer, State>();
 	private static final Action EMPTY_ACTION = new Action() {
 		@Override
-		public void dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
+		public int dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
+			return pos + 1;
 		}
 	};
 
 	static {
 		/**
 		 * state:0 empty state; <br/>
-		 * state:1 buffer is normal nums;<br/>
-		 * state:2 buffer end with quant;<br/>
-		 * state:3 buffer end with point;<br/>
-		 * state:4 buffer is quant;<br/>
+		 * state:1 buffer ends number;<br/>
+		 * state:2 buffer has unit;<br/>
+		 * state:3 buffer has point;<br/>
+		 * state:4 buffer is only unit;<br/>
 		 */
 
 		/**
 		 * input:0 normal word;<br/>
-		 * input:1 normal num word;<br/>
-		 * input:2 num quant;<br/>
+		 * input:1 normal number word;<br/>
+		 * input:2 number unit;<br/>
 		 * input:3 point char;<br/>
 		 */
 
@@ -79,16 +89,18 @@ public class ChineseNumCellRecognizer implements CellRecognizer {
 		state_0.addState(0, EMPTY_ACTION);
 		state_0.addState(1, new Action() {
 			@Override
-			public void dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
+			public int dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
 				buffer.state = 1;
 				buffer.pos = pos;
+				return pos + 1;
 			}
 		});
 		state_0.addState(2, new Action() {
 			@Override
-			public void dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
+			public int dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
 				buffer.state = 4;
 				buffer.pos = pos;
+				return pos + 1;
 			}
 		});
 		state_0.addState(3, EMPTY_ACTION);
@@ -97,108 +109,161 @@ public class ChineseNumCellRecognizer implements CellRecognizer {
 		State state_1 = new State();
 		state_1.addState(0, new Action() {
 			@Override
-			public void dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
-				buffer.cursor = map.addCell(buffer.cursor, new WordCell(baseStr.sub(buffer.pos, pos), buffer.pos, pos));//add data
-				buffer.pos=-1;
-				buffer.state=0;
+			public int dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
+				if ((pos + 2) < baseStr.size() && baseStr.get(pos).image.equals("分")
+						&& baseStr.get(pos + 1).image.equals("之") && typeOf(baseStr.get(pos + 2).image) == 1) {
+					buffer.state = 3;
+					return pos + 3;
+				}
+				buffer.cursor = map.addCell(buffer.cursor, new WordCell(baseStr.sub(buffer.pos, pos), buffer.pos, pos));// add
+				buffer.cursor.val.addType(CellType.CCNUM); // data
+				buffer.pos = -1;
+				buffer.state = 0;
+				return pos + 1;
 			}
 		});
-		state_1.addState(1,EMPTY_ACTION);
+		state_1.addState(1, EMPTY_ACTION);
 		state_1.addState(2, new Action() {
 			@Override
-			public void dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
-				buffer.state=2;
+			public int dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
+				buffer.state = 2;
+				return pos + 1;
 			}
 		});
 		state_1.addState(3, new Action() {
 			@Override
-			public void dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
-				buffer.state=3;
+			public int dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
+				buffer.state = 3;
+				return pos + 1;
 			}
 		});
-		//state is 2
+		// state is 2
 		State state_2 = new State();
 		state_2.addState(0, new Action() {
 			@Override
-			public void dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
-				buffer.cursor = map.addCell(buffer.cursor, new WordCell(baseStr.sub(buffer.pos, pos), buffer.pos, pos));//add data
-				buffer.pos=-1;
-				buffer.state=0;
-			}	
+			public int dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
+				buffer.cursor = map.addCell(buffer.cursor, new WordCell(baseStr.sub(buffer.pos, pos), buffer.pos, pos));// add
+				buffer.cursor.val.addType(CellType.CCNUM); // data
+				buffer.pos = -1;
+				buffer.state = 0;
+				return pos + 1;
+			}
 		});
-		state_2.addState(1, EMPTY_ACTION);
+		state_2.addState(1, new Action() {
+			@Override
+			public int dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
+				buffer.state = 1;
+				return pos + 1;
+			}
+		});
 		state_2.addState(2, new Action() {
 			@Override
-			public void dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
-				buffer.cursor = map.addCell(buffer.cursor, new WordCell(baseStr.sub(buffer.pos, pos), buffer.pos, pos));//add data
-				buffer.pos=pos;
-				buffer.state=4;
-			}	
+			public int dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
+				buffer.cursor = map.addCell(buffer.cursor, new WordCell(baseStr.sub(buffer.pos, pos), buffer.pos, pos));// add
+				buffer.cursor.val.addType(CellType.CCNUM); // data
+				buffer.pos = pos;
+				buffer.state = 4;
+				return pos + 1;
+			}
 		});
 		state_2.addState(3, new Action() {
 			@Override
-			public void dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
-				buffer.state=3;
-			}	
-		});
-		//state is 3
-		State state_3=new State();
-		state_3.addState(0, new Action() {
-			@Override
-			public void dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
-				buffer.cursor = map.addCell(buffer.cursor, new WordCell(baseStr.sub(buffer.pos, pos-2), buffer.pos, pos-2));//add data
-				buffer.pos=-1;
-				buffer.state=0;
+			public int dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
+				buffer.state = 3;
+				return pos + 1;
 			}
 		});
-		state_3.addState(1,EMPTY_ACTION);
+		// state is 3
+		State state_3 = new State();
+		state_3.addState(0, new Action() {
+			@Override
+			public int dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
+				if (baseStr.get(pos - 1).image.endsWith(CHINESE_POINT)) {
+					buffer.cursor = map.addCell(buffer.cursor,
+							new WordCell(baseStr.sub(buffer.pos, pos - 1), buffer.pos, pos - 1));// add data
+				} else {
+					buffer.cursor = map.addCell(buffer.cursor,
+							new WordCell(baseStr.sub(buffer.pos, pos), buffer.pos, pos));// add data
+				}
+
+				buffer.cursor.val.addType(CellType.CCNUM);
+				buffer.pos = -1;
+				buffer.state = 0;
+				return pos + 1;
+			}
+		});
+		state_3.addState(1, EMPTY_ACTION);
 		state_3.addState(2, new Action() {
 			@Override
-			public void dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
-				buffer.cursor = map.addCell(buffer.cursor, new WordCell(baseStr.sub(buffer.pos, pos-2), buffer.pos, pos-2));//add data
-				buffer.pos=-1;
-				buffer.state=0;
+			public int dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
+				if (baseStr.get(pos - 1).image.endsWith(CHINESE_POINT)) {
+					buffer.cursor = map.addCell(buffer.cursor,
+							new WordCell(baseStr.sub(buffer.pos, pos - 1), buffer.pos, pos - 1));// add data
+				} else {
+					buffer.cursor = map.addCell(buffer.cursor,
+							new WordCell(baseStr.sub(buffer.pos, pos), buffer.pos, pos));// add data
+				}
+				buffer.cursor.val.addType(CellType.CCNUM);
+				buffer.pos = pos;
+				buffer.state = 4;
+				return pos + 1;
 			}
 		});
 		state_3.addState(3, new Action() {
 			@Override
-			public void dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
-				buffer.cursor = map.addCell(buffer.cursor, new WordCell(baseStr.sub(buffer.pos, pos-2), buffer.pos, pos-2));//add data
-				buffer.pos=-1;
-				buffer.state=0;
+			public int dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
+				if (baseStr.get(pos - 1).image.endsWith(CHINESE_POINT)) {
+					buffer.cursor = map.addCell(buffer.cursor,
+							new WordCell(baseStr.sub(buffer.pos, pos - 1), buffer.pos, pos - 1));// add data
+				} else {
+					buffer.cursor = map.addCell(buffer.cursor,
+							new WordCell(baseStr.sub(buffer.pos, pos), buffer.pos, pos));// add data
+				}
+				buffer.cursor.val.addType(CellType.CCNUM);
+				buffer.pos = -1;
+				buffer.state = 0;
+				return pos + 1;
 			}
 		});
-		//state is 4
-		State state_4=new State();
+		// state is 4
+		State state_4 = new State();
 		state_4.addState(0, new Action() {
 			@Override
-			public void dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
-				// TODO Auto-generated method stub
-				
+			public int dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
+				buffer.cursor = map.addCell(buffer.cursor, new WordCell(baseStr.sub(buffer.pos, pos), buffer.pos, pos));// add
+																														// data
+				buffer.cursor.val.addType(CellType.CCNUM);
+				buffer.pos = -1;
+				buffer.state = 0;
+				return pos + 1;
 			}
 		});
 		state_4.addState(1, new Action() {
 			@Override
-			public void dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
-				// TODO Auto-generated method stub
-				
+			public int dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
+				buffer.cursor = map.addCell(buffer.cursor, new WordCell(baseStr.sub(buffer.pos, pos), buffer.pos, pos));// add
+				buffer.cursor.val.addType(CellType.CCNUM); // data
+				buffer.pos = pos;
+				buffer.state = 1;
+				return pos + 1;
 			}
 		});
 		state_4.addState(2, new Action() {
 			@Override
-			public void dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
-				// TODO Auto-generated method stub
-				
+			public int dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
+				buffer.cursor = map.addCell(buffer.cursor, new WordCell(baseStr.sub(buffer.pos, pos), buffer.pos, pos));// add
+				buffer.cursor.val.addType(CellType.CCNUM); // data
+				buffer.pos = pos;
+				return pos + 1;
 			}
 		});
 		state_4.addState(3, new Action() {
 			@Override
-			public void dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
-				// TODO Auto-generated method stub
-				
+			public int dothis(Buffer buffer, AtomList baseStr, CellMap map, int pos) {
+				buffer.state = 3;
+				return pos + 1;
 			}
 		});
-		
 
 		// add last
 		root.put(0, state_0);
@@ -216,8 +281,11 @@ public class ChineseNumCellRecognizer implements CellRecognizer {
 	@Override
 	public void read(AtomList baseStr, CellMap map) {
 		Buffer buffer = new Buffer(map.head(), 0, -1);
-		for (int i = 0; i < baseStr.size(); i++)
-			root.get(buffer.state).trans(typeOf(baseStr.get(i).image)).dothis(buffer, baseStr, map, i);
+		int index = 0;
+		while (index < baseStr.size()) {
+			int input = typeOf(baseStr.get(index).image);
+			index = root.get(buffer.state).trans(input).dothis(buffer, baseStr, map, index);
+		}
 		// do last
 		root.get(buffer.state).trans(0).dothis(buffer, baseStr, map, baseStr.size());
 	}
@@ -228,16 +296,12 @@ public class ChineseNumCellRecognizer implements CellRecognizer {
 		int c = Arrays.binarySearch(CHINESE_NUM, ch);
 		if (c >= 0)
 			return 1;
-		c = Arrays.binarySearch(CHINESE_Q, ch);
+		c = Arrays.binarySearch(CHINESE_UNIT, ch);
 		if (c >= 0)
 			return 2;
 		if (ch.equals(CHINESE_POINT))
 			return 3;
 		return 0;
-	}
-
-	public static void main(String[] args) {
-		System.out.println(Arrays.toString(CHINESE_NUM));
 	}
 
 }

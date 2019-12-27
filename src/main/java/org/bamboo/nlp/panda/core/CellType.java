@@ -38,6 +38,10 @@ public enum CellType {
 	 * 日期
 	 */
 	DATE,
+	/**
+	 * 各种节日
+	 */
+	FESTIVAL,
 
 	/**
 	 * 时间
@@ -64,5 +68,6 @@ public enum CellType {
 	 * 编号与序数
 	 */
 	ORDER;
+	
 
 }

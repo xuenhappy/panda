@@ -10,6 +10,7 @@ import org.bamboo.nlp.panda.core.CellMap;
 import org.bamboo.nlp.panda.core.CellMap.Cursor;
 import org.bamboo.nlp.panda.core.CellQuantizer;
 import org.bamboo.nlp.panda.core.CellRecognizer;
+import org.bamboo.nlp.panda.core.ChineseNumCellRecognizer;
 import org.bamboo.nlp.panda.core.DictCellRecongnizer;
 import org.bamboo.nlp.panda.core.ShortLenCellQuantizer;
 import org.bamboo.nlp.panda.core.SplitPathMap;
@@ -117,17 +118,17 @@ public class Segment implements Closeable {
 		html.append("<div class=\"title-text\">Step 2: Cell识别</div>\n");
 		CellMap cmap = buildMap(cells);
 		html.append(cmap.toHtml()).append("\n<br/><br/><br/>\n");
-		html.append("<div class=\"title-text\">Step 3: 切分图构造</div>\n");
-		SplitPathMap smap = new SplitPathMap(cmap, this.quantizer,cells);
-		html.append(smap.toHtml()).append("\n<br/><br/><br/>\n");
-		html.append("<div class=\"title-text\">Step 4: 切词结果</div>\n");
-		List<WordCell> bestpath = smap.bestPath();
-		Atom[] lists = new Atom[bestpath.size()];
-		int i = 0;
-		for (WordCell w : bestpath)
-			lists[i++] = w.word;
-		bestpath.clear();
-		html.append(new AtomList(lists).toHtml()).append("\n<br/><br/><br/>\n");
+//		html.append("<div class=\"title-text\">Step 3: 切分图构造</div>\n");
+//		SplitPathMap smap = new SplitPathMap(cmap, this.quantizer,cells);
+//		html.append(smap.toHtml()).append("\n<br/><br/><br/>\n");
+//		html.append("<div class=\"title-text\">Step 4: 切词结果</div>\n");
+//		List<WordCell> bestpath = smap.bestPath();
+//		Atom[] lists = new Atom[bestpath.size()];
+//		int i = 0;
+//		for (WordCell w : bestpath)
+//			lists[i++] = w.word;
+//		bestpath.clear();
+//		html.append(new AtomList(lists).toHtml()).append("\n<br/><br/><br/>\n");
 		html.append("</body></html>");
 		return html.toString();
 	}
@@ -163,9 +164,11 @@ public class Segment implements Closeable {
 	public static void main(String[] args) throws IOException {
 		CellQuantizer quantizer = new ShortLenCellQuantizer();
 		Segment sg = new Segment(true, quantizer);
-		sg.addCellRecognizer(new DictCellRecongnizer(null));
-		sg.addCellRecognizer(new TTCellRecognizer());
-		String html=sg.cutShow4Html("12月23日至12月25日，明年春运火车票进入销售最高峰时段。");
+		//sg.addCellRecognizer(new DictCellRecongnizer(null));
+		//sg.addCellRecognizer(new TTCellRecognizer());
+		sg.addCellRecognizer(new ChineseNumCellRecognizer());
+		//String html=sg.cutShow4Html("12月23日至12月25日，明年春运火车票进入销售最高峰时段。");
+		String html=sg.cutShow4Html("三分之八的整数是三");
 		System.out.println(html);
 		sg.close();
 	}
