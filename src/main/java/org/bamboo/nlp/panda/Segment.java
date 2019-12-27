@@ -13,6 +13,7 @@ import org.bamboo.nlp.panda.core.CellRecognizer;
 import org.bamboo.nlp.panda.core.DictCellRecongnizer;
 import org.bamboo.nlp.panda.core.ShortLenCellQuantizer;
 import org.bamboo.nlp.panda.core.SplitPathMap;
+import org.bamboo.nlp.panda.core.TTCellRecognizer;
 import org.bamboo.nlp.panda.core.WordCell;
 import org.bamboo.nlp.panda.source.Resource;
 import org.bamboo.nlp.panda.core.Atom;
@@ -163,6 +164,7 @@ public class Segment implements Closeable {
 		CellQuantizer quantizer = new ShortLenCellQuantizer();
 		Segment sg = new Segment(true, quantizer);
 		sg.addCellRecognizer(new DictCellRecongnizer(null));
+		sg.addCellRecognizer(new TTCellRecognizer());
 		String html=sg.cutShow4Html("12月23日至12月25日，明年春运火车票进入销售最高峰时段。");
 		System.out.println(html);
 		sg.close();

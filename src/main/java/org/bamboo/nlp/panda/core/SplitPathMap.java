@@ -33,6 +33,11 @@ public class SplitPathMap implements HtmlVisually {
 			this.weight = weight;
 			assert this.weight >= 0.0;
 		}
+
+		@Override
+		public String toString() {
+			return "Path [node=" + node + ", weight=" + weight + "]";
+		}
 	}
 
 	// path data
@@ -87,7 +92,6 @@ public class SplitPathMap implements HtmlVisually {
 				p.add(new Path(cellMap.elenum(), 0));
 			paths.put(pre.getIndex(), p);
 		}
-
 	}
 
 	@Override
@@ -238,6 +242,7 @@ public class SplitPathMap implements HtmlVisually {
 			S[u] = true;
 			if (S[paths.size() - 1]) // end point
 				break;
+			
 			for (Path p : paths.get(u)) {
 				if (S[p.node])
 					continue;
