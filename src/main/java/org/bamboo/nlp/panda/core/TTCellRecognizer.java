@@ -18,8 +18,6 @@ public class TTCellRecognizer implements CellRecognizer {
 
 	@Override
 	public void close() throws IOException {
-		// TODO Auto-generated method stub
-		
 	}
 
 }
