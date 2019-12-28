@@ -1,4 +1,4 @@
-package org.bamboo.nlp.panda.lucene;
+package org.bamboo.nlp.panda.search;
 
 import java.io.IOException;
 
@@ -6,6 +6,7 @@ import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import org.apache.lucene.analysis.tokenattributes.TypeAttribute;
+import org.bamboo.nlp.panda.PandaConf;
 import org.bamboo.nlp.panda.StreamSegment;
 import org.bamboo.nlp.panda.Token;
 
@@ -41,11 +42,11 @@ public final class PandaTokenizer extends Tokenizer {
 	 * Tokenizer for Lucene 4.0
 	 *
 	 */
-	public PandaTokenizer() {
+	public PandaTokenizer(PandaConf conf) {
 		offsetAtt = addAttribute(OffsetAttribute.class);
 		termAtt = addAttribute(CharTermAttribute.class);
 		typeAtt = addAttribute(TypeAttribute.class);
-		this.segment = new StreamSegment(input);
+		this.segment = new StreamSegment(input,conf);
 	}
 
 	@Override

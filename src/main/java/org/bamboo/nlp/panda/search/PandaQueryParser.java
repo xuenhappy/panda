@@ -1,4 +1,4 @@
-package org.bamboo.nlp.panda.lucene;
+package org.bamboo.nlp.panda.search;
 
 import java.util.HashMap;
 import java.util.Map;

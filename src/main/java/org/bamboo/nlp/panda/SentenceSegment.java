@@ -28,7 +28,7 @@ import org.bamboo.nlp.panda.tools.StrTools;
  * @author xuen
  *
  */
-public class Segment implements Closeable {
+public class SentenceSegment implements Closeable {
 
 	/**
 	 * segment conf
@@ -60,7 +60,7 @@ public class Segment implements Closeable {
 	 * @param conf
 	 * @param quantizer
 	 */
-	public Segment(boolean is_normal_str, CellQuantizer quantizer) {
+	public SentenceSegment(boolean is_normal_str, CellQuantizer quantizer) {
 		super();
 		this.is_normal_str = is_normal_str;
 		this.cellRecognizers = new LinkedList<CellRecognizer>();
@@ -163,7 +163,7 @@ public class Segment implements Closeable {
 
 	public static void main(String[] args) throws IOException {
 		CellQuantizer quantizer = new ShortLenCellQuantizer();
-		Segment sg = new Segment(true, quantizer);
+		SentenceSegment sg = new SentenceSegment(true, quantizer);
 		//sg.addCellRecognizer(new DictCellRecongnizer(null));
 		//sg.addCellRecognizer(new TTCellRecognizer());
 		sg.addCellRecognizer(new ChineseNumCellRecognizer());

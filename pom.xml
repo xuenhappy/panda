@@ -16,7 +16,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java.version>1.8</java.version>
 		<maven-compiler-plugin.version>3.0</maven-compiler-plugin.version>
-		<lucene.version>8.1.0</lucene.version>
+		<lucene.version>8.2.0</lucene.version>
 	</properties>
 
 	<repositories>
@@ -35,7 +35,7 @@
 	</repositories>
 
 	<dependencies>
-		<!-- the lucene api use -->
+		<!-- the lucene and es api -->
 		<dependency>
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-core</artifactId>
