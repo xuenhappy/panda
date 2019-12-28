@@ -6,13 +6,21 @@ public class StreamSegment {
 	/**
 	 * data
 	 */
-	protected Reader input;
+	protected final Reader input;
 	
+	
+	public StreamSegment(Reader input) {
+		super();
+		this.input = input;
+	}
+
+
+
 	/**
 	 * split data
 	 * @return
 	 */
-	public Token next() {
+	public synchronized Token next() {
 		return null;
 	}
 

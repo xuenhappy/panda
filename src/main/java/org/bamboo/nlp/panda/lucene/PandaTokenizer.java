@@ -45,7 +45,7 @@ public final class PandaTokenizer extends Tokenizer {
 		offsetAtt = addAttribute(OffsetAttribute.class);
 		termAtt = addAttribute(CharTermAttribute.class);
 		typeAtt = addAttribute(TypeAttribute.class);
-		this.segment = new StreamSegment();
+		this.segment = new StreamSegment(input);
 	}
 
 	@Override
