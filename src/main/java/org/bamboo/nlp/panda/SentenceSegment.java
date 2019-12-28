@@ -68,6 +68,15 @@ public class SentenceSegment implements Closeable {
 	}
 
 	/**
+	 * init data from conf
+	 * @param conf
+	 */
+	public SentenceSegment(PandaConf conf) {
+		//TODO init from pandconf
+		this(false,null);
+	}
+
+	/**
 	 * cut the give data
 	 * 
 	 * @param str

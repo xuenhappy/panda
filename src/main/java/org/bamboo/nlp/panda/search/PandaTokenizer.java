@@ -76,4 +76,12 @@ public final class PandaTokenizer extends Tokenizer {
 		int finalOffset = correctOffset(this.endPosition);
 		offsetAtt.setOffset(finalOffset, finalOffset);
 	}
+
+	@Override
+	public void close() throws IOException {
+		this.segment.close();
+		super.close();
+	}
+	
+	
 }
