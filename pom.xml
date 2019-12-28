@@ -9,13 +9,14 @@
 	<packaging>jar</packaging>
 
 	<name>panda</name>
-	<url>http://maven.apache.org</url>
+	<url>https://github.com/xuenhappy/panda</url>
 
 	<properties>
 		<main.classname>org.bamboo.nlp.panda.App</main.classname>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java.version>1.8</java.version>
 		<maven-compiler-plugin.version>3.0</maven-compiler-plugin.version>
+		<lucene.version>8.1.0</lucene.version>
 	</properties>
 
 	<repositories>
@@ -34,6 +35,24 @@
 	</repositories>
 
 	<dependencies>
+		<!-- the lucene api use -->
+		<dependency>
+			<groupId>org.apache.lucene</groupId>
+			<artifactId>lucene-core</artifactId>
+			<version>${lucene.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.lucene</groupId>
+			<artifactId>lucene-queryparser</artifactId>
+			<version>${lucene.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.lucene</groupId>
+			<artifactId>lucene-analyzers-common</artifactId>
+			<version>${lucene.version}</version>
+		</dependency>
+		<!-- Algorithm usage -->
+
 		<dependency>
 			<groupId>org.jblas</groupId>
 			<artifactId>jblas</artifactId>
@@ -54,23 +73,23 @@
 
 
 	</dependencies>
-	
-	
-	
+
+
+
 
 	<build>
-	
-	<resources>
-	
-	<resource>  
-        <directory>src/main/java</directory>  
-        <includes>  
-            <include>**/*.css</include>  
-            <include>**/*.bd</include>  
-        </includes>  
-    </resource>  
-	
-	</resources>
+
+		<resources>
+
+			<resource>
+				<directory>src/main/java</directory>
+				<includes>
+					<include>**/*.css</include>
+					<include>**/*.bd</include>
+				</includes>
+			</resource>
+
+		</resources>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -118,4 +137,5 @@
 		</plugins>
 	</build>
 
+	<description>An intelligent and efficient framework of Chinese English mixed language word cutter</description>
 </project>
