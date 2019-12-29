@@ -29,18 +29,14 @@ public final class BaseLex {
 
 			t = StrTools.typeOfChar(c);
 			if (buf.length() > 0 && bt != t) {
-				Atom a = new Atom(buf.toString(), buf_st, i);
-				a.addType(changeType(bt));
-				tmp.add(a);
+				tmp.add(new Atom(buf.toString(), buf_st, i,changeType(bt)));
 				buf.setLength(0);
 				bt = CharType.UNK;
 				buf_st = -1;
 			}
 
 			if (t == CharType.CJK) {
-				Atom a = new Atom(c + "", i, i + 1);
-				a.addType(CellType.CHW);
-				tmp.add(a);
+				tmp.add(new Atom(c + "", i, i + 1,CellType.CHW));
 				continue;
 			}
 			buf.append(c);
@@ -50,9 +46,7 @@ public final class BaseLex {
 
 		}
 		if (buf.length() > 0) {
-			Atom a = new Atom(buf.toString(), buf_st, str.length());
-			a.addType(changeType(bt));
-			tmp.add(a);
+			tmp.add(new Atom(buf.toString(), buf_st, str.length(),changeType(bt)));
 		}
 
 		return new AtomList(tmp.toArray(new Atom[tmp.size()]));

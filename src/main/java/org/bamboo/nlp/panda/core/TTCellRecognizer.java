@@ -16,15 +16,19 @@ public class TTCellRecognizer implements CellRecognizer {
 		for (int i = 0; i < baseStr.size(); i++) {
 			if (!baseStr.get(i).hasType(CellType.CHW))
 				continue;
-			if (i + 1 < baseStr.size()) {//add two
+			if (i + 1 < baseStr.size()) {// add two
 				if (!baseStr.get(i + 1).hasType(CellType.CHW))
 					continue;
 				cursor = map.addCell(cursor, new WordCell(baseStr.sub(i, i + 2), i, i + 2));
+				if (cursor.val.getTypes().isEmpty())//add type
+					cursor.val.addType(CellType.UNK);
 
-				if (i + 2 < baseStr.size()) {//add three
+				if (i + 2 < baseStr.size()) {// add three
 					if (!baseStr.get(i + 2).hasType(CellType.CHW))
 						continue;
 					cursor = map.addCell(cursor, new WordCell(baseStr.sub(i, i + 3), i, i + 3));
+					if (cursor.val.getTypes().isEmpty())//add type
+						cursor.val.addType(CellType.UNK);
 				}
 			}
 		}

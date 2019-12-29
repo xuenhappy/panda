@@ -78,6 +78,7 @@ public class AtomList implements StrList, HtmlVisually {
 	 * 
 	 * @param pos .inclusive.
 	 * @param end .exclusive.
+	 * @param type must give type
 	 * @return
 	 */
 	public Atom sub(int pos, int end) {

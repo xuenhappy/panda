@@ -62,6 +62,10 @@ public class WordCell implements HtmlVisually {
 	public void addType(CellType type) {
 		this.word.addType(type);
 	}
+	
+	public void addType(CellType[] types) {
+		this.word.addType(types);
+	}
 
 	@Override
 	public String toHtml() {

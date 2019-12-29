@@ -18,7 +18,7 @@ import org.bamboo.nlp.panda.core.WordCell;
  */
 public class StreamSegment implements Closeable{
 	private static final int MAX_SENTENCE_LEN = 100;
-	private static final char[] SENTENCE_END_CHARS = "；。，：”“\",;\n\t\r:".toCharArray();
+	private static final char[] SENTENCE_END_CHARS = "；。，！？…：”“\",;\n\t\r:!?".toCharArray();
 	static {
 		Arrays.sort(SENTENCE_END_CHARS);
 	}

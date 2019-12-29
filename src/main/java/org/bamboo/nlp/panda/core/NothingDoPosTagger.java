@@ -28,6 +28,7 @@ public class NothingDoPosTagger implements PosTagger {
 			Collection<CellType> types = c.getTypes();
 			int fnum = 0;
 			int sz = tokens.size();
+			assert sz>0;
 			for (CellType m : types) {
 				if ((sz - fnum) > 1 && (m == CellType.UNK || m == CellType.CHW || m == CellType.CHW)) {//filter low infomation tag
 					fnum++;

@@ -138,14 +138,13 @@ public class DictCellRecongnizer implements CellRecognizer {
 	@Override
 	public void read(AtomList baseStr, CellMap map) {
 		dicts.parseText(baseStr, new DoubleArrayTrie.IHit<CellType[]>() {
-			CellMap.Cursor head = map.head();
+			CellMap.Cursor cursor = map.head();
 
 			@Override
 			public boolean hit(int begin, int end, CellType[] value) {
 				Atom newAtom = baseStr.sub(begin, end);
-				for (CellType t : value)
-					newAtom.addType(t);
-				head = map.addCell(head, new WordCell(newAtom, begin, end));
+				newAtom.addType(value);
+				cursor = map.addCell(cursor, new WordCell(newAtom, begin, end));
 				return true;
 			}
 		});
