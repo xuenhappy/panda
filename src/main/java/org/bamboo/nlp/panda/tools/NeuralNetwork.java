@@ -81,7 +81,7 @@ public final class NeuralNetwork {
 	}
 
 	/**
-	 * dense层for torch
+	 * dense layer for torch
 	 * 
 	 * @author xuen
 	 *
@@ -139,7 +139,7 @@ public final class NeuralNetwork {
 	}
 
 	/**
-	 * 基础GRU层
+	 * gru layer for torch
 	 * 
 	 * @author xuen
 	 *
