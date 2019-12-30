@@ -72,6 +72,15 @@ class SentenceEncoder(nn.Module):
         title_vecs = RunRnn(self.encrnn, batch_titles_conv, batch_title_length)
         return self.map2s(title_vec)
       
+      
+class Mish(nn.Module):
+    def __init__(self):
+        super().__init__()
+      
+    def forward(self,x):
+        x = x * (torch.tanh(F.softplus(x)))
+        return x
+
    
 class Quantizer(torch.nn.Module):
 
@@ -84,7 +93,7 @@ class Quantizer(torch.nn.Module):
             torch.nn.Linear(400 * 2, n_hidden),
             torch.nn.Tanh(),
             torch.nn.Linear(n_hidden, 1),
-            torch.nn.Softplus()
+            Mish()
         )
 
     def distance(self, x, y):
