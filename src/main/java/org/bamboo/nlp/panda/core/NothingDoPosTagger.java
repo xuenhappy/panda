@@ -1,8 +1,9 @@
 package org.bamboo.nlp.panda.core;
 
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * a pos tagger that do nothing
@@ -24,16 +25,19 @@ public class NothingDoPosTagger implements PosTagger {
 
 	@Override
 	public void tag(List<WordCell> tokens) {
+		Set<CellType> tmp=new  HashSet<CellType>();
 		for (WordCell c : tokens) {
-			Collection<CellType> types = c.getTypes();
-			int fnum = 0;
-			int sz = tokens.size();
-			assert sz>0;
-			for (CellType m : types) {
-				if ((sz - fnum) > 1 && (m == CellType.UNK || m == CellType.CHW || m == CellType.CHW)) {//filter low infomation tag
-					fnum++;
-					continue;
-				}
+			tmp.clear();
+			tmp.addAll(c.getTypes());
+			assert tmp.size() > 0;
+			// filter low information tag
+			if(tmp.size()>1&&tmp.contains(CellType.UNK))
+				tmp.remove(CellType.UNK);
+			if(tmp.size()>1&&tmp.contains(CellType.CHW))
+				tmp.remove(CellType.CHW);
+			if(tmp.size()>1&&tmp.contains(CellType.ENG))
+				tmp.remove(CellType.ENG);
+			for (CellType m : tmp) {
 				c.setFeature(Arrays.binarySearch(this.types, m.toString()));
 				break;
 			}
