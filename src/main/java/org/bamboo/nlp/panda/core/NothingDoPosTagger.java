@@ -25,7 +25,7 @@ public class NothingDoPosTagger implements PosTagger {
 
 	@Override
 	public void tag(List<WordCell> tokens) {
-		Set<CellType> tmp=new  HashSet<CellType>();
+		Set<CellType> tmp=new  HashSet<CellType>(10);
 		for (WordCell c : tokens) {
 			tmp.clear();
 			tmp.addAll(c.getTypes());

@@ -52,7 +52,7 @@ public class SmartCellQuantizer implements CellQuantizer {
 			this.presenter.embed(cells, context);
 		Iterator<Cursor> it = cells.iterator();
 		ArrayList<float[]> embedings = new ArrayList<float[]>(10);
-		Set<CellType> tmp = new HashSet<CellType>();
+		Set<CellType> tmp = new HashSet<CellType>(10);
 		while (it.hasNext()) {
 			WordCell cell = it.next().val;
 			embedings.clear();
