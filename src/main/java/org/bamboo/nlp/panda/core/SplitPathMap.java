@@ -86,7 +86,9 @@ public class SplitPathMap implements HtmlVisually {
 			Iterator<Cursor> nit = cellMap.iteratorRowFrom(pre, pre.val.end);
 			while (nit.hasNext()) {
 				Cursor next = nit.next();
-				p.add(new Path(next.getIndex(), quantizer.distance(pre.val, next.val)));
+				double dist=quantizer.distance(pre.val, next.val);
+				if(dist>0)
+					p.add(new Path(next.getIndex(),dist));
 			}
 			if (p.isEmpty())// add last
 				p.add(new Path(cellMap.elenum(), 0));

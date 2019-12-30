@@ -10,7 +10,8 @@ import java.io.IOException;
 public interface CellQuantizer extends CellPresenter{
 	
 	/**
-	 * the distance of from pre to next
+	 * the distance of from pre to next <br/>
+	 * if distance is a negative number indicates a transfer that does not exist 
 	 * @param pre
 	 * @param next
 	 * @return
