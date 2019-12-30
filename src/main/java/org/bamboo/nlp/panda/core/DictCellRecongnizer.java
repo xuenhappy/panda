@@ -18,6 +18,7 @@ import java.util.regex.Pattern;
 import org.bamboo.nlp.panda.source.Resource;
 import org.bamboo.nlp.panda.tools.DoubleArrayTrie;
 import org.bamboo.nlp.panda.tools.StrList;
+import org.json.JSONObject;
 
 /**
  * 基于trie词典的方式识别基本单元
@@ -74,6 +75,19 @@ public class DictCellRecongnizer implements CellRecognizer {
 		loadDict(usrDict);
 	}
 
+	public DictCellRecongnizer(JSONObject conf) throws IOException {
+		this.dicts = new DoubleArrayTrie<CellType[]>();
+		if (conf.has("usr.dic.uri"))
+			loadDict(conf.getString("usr.dic.uri"));
+		else
+			loadDict(null);
+	}
+
+	public DictCellRecongnizer() throws IOException {
+		this.dicts = new DoubleArrayTrie<CellType[]>();
+		loadDict(null);
+	}
+
 	/**
 	 * load allDict
 	 * 
@@ -84,10 +98,10 @@ public class DictCellRecongnizer implements CellRecognizer {
 		LinkedList<CellType[]> vals = new LinkedList<CellType[]>();
 		LinkedList<StrArray> keys = new LinkedList<StrArray>();
 		Set<String> dup = new HashSet<String>();
-		loadDict(keys, vals, Resource.getResource(Resource.INNER_WORD_DICT),dup);
+		loadDict(keys, vals, Resource.getResource(Resource.INNER_WORD_DICT), dup);
 		if (usrDict != null && !usrDict.isEmpty()) {
 			File file = new File(URI.create(usrDict));
-			loadDict(keys, vals, new FileInputStream(file),dup);
+			loadDict(keys, vals, new FileInputStream(file), dup);
 		} // load usr dict
 		this.dicts.build(keys, vals);
 		// clear data
@@ -105,7 +119,8 @@ public class DictCellRecongnizer implements CellRecognizer {
 	 * @param resource
 	 * @throws IOException
 	 */
-	private void loadDict(List<StrArray> keys, List<CellType[]> vals, InputStream resource,Set<String> dup) throws IOException {
+	private void loadDict(List<StrArray> keys, List<CellType[]> vals, InputStream resource, Set<String> dup)
+			throws IOException {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(resource, "utf-8"), 1024 * 5);
 		try {
 			String line;

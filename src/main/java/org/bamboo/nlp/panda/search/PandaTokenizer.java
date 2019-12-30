@@ -6,9 +6,9 @@ import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import org.apache.lucene.analysis.tokenattributes.TypeAttribute;
-import org.bamboo.nlp.panda.PandaConf;
 import org.bamboo.nlp.panda.StreamSegment;
 import org.bamboo.nlp.panda.Token;
+import org.json.JSONObject;
 
 /**
  * a lucene {@link Tokenizer} impl
@@ -42,7 +42,7 @@ public final class PandaTokenizer extends Tokenizer {
 	 * Tokenizer for Lucene 4.0
 	 *
 	 */
-	public PandaTokenizer(PandaConf conf) {
+	public PandaTokenizer(JSONObject conf) {
 		offsetAtt = addAttribute(OffsetAttribute.class);
 		termAtt = addAttribute(CharTermAttribute.class);
 		typeAtt = addAttribute(TypeAttribute.class);

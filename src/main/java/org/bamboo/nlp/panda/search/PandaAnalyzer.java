@@ -2,7 +2,7 @@ package org.bamboo.nlp.panda.search;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.Tokenizer;
-import org.bamboo.nlp.panda.PandaConf;
+import org.json.JSONObject;
 
 /**
  * the lucene {@link Analyzer} impl
@@ -11,10 +11,10 @@ import org.bamboo.nlp.panda.PandaConf;
  *
  */
 public class PandaAnalyzer extends Analyzer {
-	private final PandaConf conf;
+	private final JSONObject conf;
 	
 
-	public PandaAnalyzer(PandaConf conf) {
+	public PandaAnalyzer(JSONObject conf) {
 		super();
 		this.conf = conf;
 	}

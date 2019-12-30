@@ -10,6 +10,8 @@ import java.util.List;
 
 import org.bamboo.nlp.panda.tools.IOSerializable;
 import org.jblas.FloatMatrix;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * the pos tagger base on crf model
@@ -30,6 +32,12 @@ public class CrfPosTagger implements PosTagger, IOSerializable {
 	 * tags explain
 	 */
 	private String[] tags;
+	
+	
+	public CrfPosTagger(JSONObject conf) throws JSONException, IOException {
+		this(conf.getString("model.data"));
+	}
+	
 
 	public CrfPosTagger(String conf_data) throws IOException {
 		FileInputStream ins = new FileInputStream(conf_data);

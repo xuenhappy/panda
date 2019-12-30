@@ -2,6 +2,7 @@ package org.bamboo.nlp.panda;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -12,6 +13,7 @@ import org.bamboo.nlp.panda.core.CellQuantizer;
 import org.bamboo.nlp.panda.core.CellRecognizer;
 import org.bamboo.nlp.panda.core.ChineseNumCellRecognizer;
 import org.bamboo.nlp.panda.core.DictCellRecongnizer;
+import org.bamboo.nlp.panda.core.PosTagger;
 import org.bamboo.nlp.panda.core.ShortLenCellQuantizer;
 import org.bamboo.nlp.panda.core.SplitPathMap;
 import org.bamboo.nlp.panda.core.TTCellRecognizer;
@@ -21,6 +23,8 @@ import org.bamboo.nlp.panda.core.Atom;
 import org.bamboo.nlp.panda.core.AtomList;
 import org.bamboo.nlp.panda.core.BaseLex;
 import org.bamboo.nlp.panda.tools.StrTools;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  * the segment
@@ -69,37 +73,87 @@ public class SentenceSegment implements Closeable {
 
 	/**
 	 * init data from conf
+	 * 
 	 * @param conf
 	 */
-	public SentenceSegment(PandaConf conf) {
-		//TODO init from pandconf
-		this(false,null);
+	public SentenceSegment(JSONObject conf) {
+		if (conf.has("normal.str"))
+			this.is_normal_str = conf.getBoolean("normal.str");
+		else
+			this.is_normal_str = false;
+		if (conf.has("quantizer"))
+			this.quantizer = initQuantizer(conf.getJSONObject("quantizer"));
+		else
+			this.quantizer = null;
+		this.cellRecognizers = new LinkedList<CellRecognizer>();
+		if (conf.has("recognizers")) {
+			JSONArray arys = conf.getJSONArray("recognizers");
+			for (int i = 0; i < arys.length(); i++) {
+				this.cellRecognizers.add(initCellRecognizer(arys.getJSONObject(i)));
+			}
+		}
+	}
+
+	private CellRecognizer initCellRecognizer(JSONObject conf) {
+		String cls = conf.getString("conf.class");
+		try {
+			if (conf.keySet().size() == 1)
+				return Class.forName(cls).asSubclass(CellRecognizer.class).newInstance();// empty
+			return Class.forName(cls).asSubclass(CellRecognizer.class).getConstructor(JSONObject.class)
+					.newInstance(conf);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	private CellQuantizer initQuantizer(JSONObject conf) {
+		String cls = conf.getString("conf.class");
+		try {
+			if (conf.keySet().size() == 1)
+				return Class.forName(cls).asSubclass(CellQuantizer.class).newInstance();// empty
+			return Class.forName(cls).asSubclass(CellQuantizer.class).getConstructor(JSONObject.class)
+					.newInstance(conf);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	/**
-	 * cut the give data
+	 * cut the give data in smart mode
 	 * 
 	 * @param str
 	 * @return
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public List<WordCell> smart_cut(CharSequence str) throws IOException {
 		AtomList cells = makeList(str);
+		if (cells.size() == 1) {// single data
+			List<WordCell> result = new ArrayList<WordCell>(1);
+			result.add(new WordCell(cells.get(0), 0, 1));
+			return result;
+		}
 		CellMap cmap = buildMap(cells);
-		SplitPathMap smap = new SplitPathMap(cmap, this.quantizer,cells);
-		List<WordCell> c= smap.bestPath();
+		SplitPathMap smap = new SplitPathMap(cmap, this.quantizer, cells);
+		List<WordCell> c = smap.bestPath();
 		smap.clear();
 		return c;
 	}
 
 	/**
-	 * cut the give data
+	 * cut the give data in max mode
 	 * 
 	 * @param str
 	 * @return
 	 */
 	public List<WordCell> max_cut(CharSequence str) {
 		AtomList cells = makeList(str);
+		if (cells.size() == 1) {// single data
+			List<WordCell> result = new ArrayList<WordCell>(1);
+			result.add(new WordCell(cells.get(0), 0, 1));
+			return result;
+		}
 		CellMap cmap = buildMap(cells);
 		LinkedList<WordCell> rs = new LinkedList<WordCell>();
 		Iterator<Cursor> it = cmap.iterator();
@@ -173,11 +227,11 @@ public class SentenceSegment implements Closeable {
 	public static void main(String[] args) throws IOException {
 		CellQuantizer quantizer = new ShortLenCellQuantizer();
 		SentenceSegment sg = new SentenceSegment(true, quantizer);
-		//sg.addCellRecognizer(new DictCellRecongnizer(null));
-		//sg.addCellRecognizer(new TTCellRecognizer());
+		// sg.addCellRecognizer(new DictCellRecongnizer(null));
+		// sg.addCellRecognizer(new TTCellRecognizer());
 		sg.addCellRecognizer(new ChineseNumCellRecognizer());
-		//String html=sg.cutShow4Html("12月23日至12月25日，明年春运火车票进入销售最高峰时段。");
-		String html=sg.cutShow4Html("三分之八的整数是三");
+		// String html=sg.cutShow4Html("12月23日至12月25日，明年春运火车票进入销售最高峰时段。");
+		String html = sg.cutShow4Html("三分之八的整数是三");
 		System.out.println(html);
 		sg.close();
 	}
