@@ -68,6 +68,16 @@ public final class NeuralNetwork {
 		private Activation(AFC act) {
 			this.act = act;
 		}
+
+		/**
+		 * call this function
+		 * 
+		 * @param input
+		 * @return
+		 */
+		public FloatMatrix call(FloatMatrix input) {
+			return this.act.dothis(input);
+		}
 	}
 
 	/**
@@ -95,7 +105,7 @@ public final class NeuralNetwork {
 			if (blas != null)
 				val = val.addiRowVector(blas);
 			if (activation != null)
-				val = activation.act.dothis(val);
+				val = activation.call(val);
 			return val;
 		}
 
@@ -167,9 +177,9 @@ public final class NeuralNetwork {
 			FloatMatrix h_i = gh.getRange(0, gh.rows, len, len * 2);
 			FloatMatrix h_n = gh.getRange(0, gh.rows, len * 2, len * 3);
 
-			FloatMatrix resetgate = Activation.Sigmoid.act.dothis(i_r.addi(h_r));
-			FloatMatrix inputgate = Activation.Sigmoid.act.dothis(i_i.addi(h_i));
-			FloatMatrix newgate = Activation.Tanh.act.dothis(i_n.addi(resetgate.muli(h_n)));
+			FloatMatrix resetgate = Activation.Sigmoid.call(i_r.addi(h_r));
+			FloatMatrix inputgate = Activation.Sigmoid.call(i_i.addi(h_i));
+			FloatMatrix newgate = Activation.Tanh.call(i_n.addi(resetgate.muli(h_n)));
 			FloatMatrix hy = newgate.addi(inputgate.muli(state.subi(newgate)));
 			return hy;
 		}
