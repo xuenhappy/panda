@@ -65,8 +65,11 @@ public class SmartCellQuantizer implements CellQuantizer {
 			}
 			// dict embedding data
 			float[] v = this.vecDic.embeding(cell.word.image);
-			if (v != null)
+			if (v != null) {
 				embedings.add(v);
+				cell.setEmbeding(avg(embedings));
+				continue;
+			}
 			// types embedding data
 			tmp.addAll(cell.getTypes());
 			assert tmp.size() > 0;

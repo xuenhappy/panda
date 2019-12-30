@@ -48,14 +48,14 @@ public enum CellType {
 	 */
 	TIME,
 	/**
-	 * 姓名
+	 * 姓名或人物，名人等
 	 */
-	NAME,
+	PERSON,
 
 	/**
-	 * 地址
+	 * 地址，行政区划，景点等
 	 */
-	ADDRESS,
+	PLACE,
 	/**
 	 * 机构
 	 */
@@ -67,7 +67,38 @@ public enum CellType {
 	/**
 	 * 编号与序数
 	 */
-	ORDER;
-	
+	ORDER,
+	/**
+	 * 动物
+	 */
+	ANIMALS, 
+	/**
+	 * 植物
+	 */
+	PLANTS, 
+	/**
+	 * 食物
+	 */
+	FOOD,
+	/**
+	 * 器具，电器等
+	 */
+	APPLIANCE,
+	/**
+	 * 疾病
+	 */
+	DISEASE,
+	/**
+	 * 法律术语
+	 */
+	LEGAL,
+	/**
+	 * 天体
+	 */
+	CELESTIAL,
+	/**
+	 * 星座
+	 */
+	ZODIAC;
 
 }
