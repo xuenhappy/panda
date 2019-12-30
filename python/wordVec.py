@@ -1,8 +1,7 @@
 #!/usr/bin/env python  
 # -*- coding: utf-8 -*- 
 '''
-Created on Jun 1, 2017
-词向量列表
+Created on Jun 1, 2019
 @author: xuen
 '''
 

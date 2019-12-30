@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 
 '''
-Created on Jun 5, 2019
-岗位与title匹配模型
 @author: enxu
 '''
 import numpy as np
