@@ -92,8 +92,7 @@ class Quantizer(torch.nn.Module):
         self.predict = torch.nn.Sequential(
             torch.nn.Linear(400 * 2, n_hidden),
             torch.nn.Tanh(),
-            torch.nn.Linear(n_hidden, 1),
-            Mish()
+            torch.nn.Linear(n_hidden, 1)
         )
 
     def distance(self, x, y):
