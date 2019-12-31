@@ -8,6 +8,7 @@ import java.util.TreeMap;
 import ch.systemsx.cisd.hdf5.HDF5DataClass;
 import ch.systemsx.cisd.hdf5.HDF5DataSetInformation;
 import ch.systemsx.cisd.hdf5.HDF5Factory;
+import ch.systemsx.cisd.hdf5.IHDF5FloatReader;
 import ch.systemsx.cisd.hdf5.IHDF5ObjectReadOnlyInfoProviderHandler;
 import ch.systemsx.cisd.hdf5.IHDF5Reader;
 
@@ -63,12 +64,12 @@ public class H5WordVecDic implements WordVecDic {
 			String[] words = this.reader.readStringArray("wds");
 			for (int i = 0; i < words.length; i++)
 				this.word_idx.put(words[i], i);
-			if (this.word_idx.size()<200001) {
+			if (this.word_idx.size() < 200001) {
 				this.cache = this.reader.readFloatMatrix("ary");
 			} else {
 				this.cache = null;
 			}
-			this.default_embededing=genDefault();
+			this.default_embededing = genDefault();
 		} catch (IOException e) {
 			reader.close();
 			throw e;
@@ -77,8 +78,25 @@ public class H5WordVecDic implements WordVecDic {
 	}
 
 	private float[] genDefault() {
-		// TODO Auto-generated method stub
-		return null;
+		double[] dats = new double[this.dim_size];
+		Arrays.fill(dats, 0.0);
+		if (this.cache != null) {// read from cache
+			for (int i = 0; i < this.cache.length; i++) {
+				for (int j = 0; j < dats.length; j++)
+					dats[j] += this.cache[i][j];
+			}
+		} else {// read from data
+			IHDF5FloatReader float_reader=reader.float32();
+			for (int i = 0; i < this.word_idx.size(); i++) {
+				float[][] v = float_reader.readMatrixBlock("ary", 1, (int) this.dim_size, i, 0);
+				for (int j = 0; j < dats.length; j++)
+					dats[j] += v[0][j];
+			}
+		}
+		float[] out = new float[this.dim_size];
+		for (int i = 0; i < dats.length; i++)
+			out[i] = (float) (dats[i] / this.word_idx.size());
+		return out;
 	}
 
 	@Override
@@ -94,7 +112,6 @@ public class H5WordVecDic implements WordVecDic {
 
 	@Override
 	public long wordNum() {
-
 		return word_idx.size();
 	}
 
