@@ -37,5 +37,14 @@ public interface WordVecDic extends Closeable{
 	 * @return
 	 */
 	public float[] embeding(CharSequence seq);
+	
+	
+	
+	/**
+	 * the default embeding this dict 
+	 * @return
+	 */
+	public float[] defaultEmb();
+	
 
 }

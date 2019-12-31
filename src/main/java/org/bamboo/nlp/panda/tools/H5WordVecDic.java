@@ -23,6 +23,7 @@ public class H5WordVecDic implements WordVecDic {
 	private final Map<CharSequence, Integer> word_idx;
 	private final int dim_size;
 	private final float[][] cache;
+	private final float[] default_embededing;
 
 	public H5WordVecDic(String h5file) throws IOException {
 		IHDF5Reader reader = HDF5Factory.openForReading(h5file);
@@ -67,11 +68,17 @@ public class H5WordVecDic implements WordVecDic {
 			} else {
 				this.cache = null;
 			}
+			this.default_embededing=genDefault();
 		} catch (IOException e) {
 			reader.close();
 			throw e;
 		}
 
+	}
+
+	private float[] genDefault() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
@@ -108,6 +115,11 @@ public class H5WordVecDic implements WordVecDic {
 				return v[0];
 		}
 		return null;
+	}
+
+	@Override
+	public float[] defaultEmb() {
+		return this.default_embededing;
 	}
 
 }
