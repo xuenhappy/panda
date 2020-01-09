@@ -63,19 +63,24 @@ public class LstmCellPresenter implements CellPresenter, IOSerializable {
 		FloatMatrix[] fw = gru_fw.runRnn(input);
 		FloatMatrix[] bw = gru_bw.reverseRunRnn(input);
 		Iterator<Cursor> it = cells.iterator();
-		while (it.hasNext()) {//set all embedding
+		while (it.hasNext()) {// set all embedding
 			WordCell cell = it.next().val;
-			FloatMatrix fw_o = fw[cell.word.begin];
-			FloatMatrix bw_o = bw[cell.word.begin];
-			if (cell.word.image.length() > 1) {
-				fw_o.addi(fw[cell.word.end - 1]).divi(2.0f);
-				bw_o.addi(bw[cell.word.end - 1]).divi(2.0f);
-			}
-
-			float[] c = map.forward(FloatMatrix.concatHorizontally(fw_o, bw_o)).data;
-			cell.setEmbeding(c);
+			FloatMatrix fw_s = fw[cell.word.begin];
+			FloatMatrix bw_s = bw[cell.word.begin];
+			FloatMatrix fw_e = fw[cell.word.end - 1];
+			FloatMatrix bw_e = bw[cell.word.end - 1];
+			cell.setEmbeding(map.forward(concatHorizontally(fw_s, bw_s, fw_e, bw_e)).data);
 		}
 
+	}
+
+	private static FloatMatrix concatHorizontally(FloatMatrix A, FloatMatrix B, FloatMatrix C, FloatMatrix D) {
+		float[] data = new float[A.columns + B.columns + C.columns + D.columns];
+		System.arraycopy(A.data, 0, data, 0, A.columns);
+		System.arraycopy(B.data, 0, data, A.columns, B.columns);
+		System.arraycopy(C.data, 0, data, A.columns + B.columns, C.columns);
+		System.arraycopy(D.data, 0, data, A.columns + B.columns + C.columns, D.columns);
+		return new FloatMatrix(1, data.length, data);
 	}
 
 	@Override

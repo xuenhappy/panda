@@ -56,11 +56,10 @@ class SentenceEncoder(nn.Module):
             batch_first=True,
             bidirectional=True
         )
-        self.map2s = nn.Sequential(
-            nn.Linear(400, out_dim),
-        )
+        self.weight = torch.Parameter(torch.Tensor(out_dim, 800))
+        self.bias = torch.Parameter(torch.Tensor(out_dim))
         init_param(self.encrnn)
-        init_param(self.map2s)
+        init_param(self.weight)
         
     def forward(self, batch_sentence, batch_sentence_length, keep_prop):
         """
@@ -70,14 +69,15 @@ class SentenceEncoder(nn.Module):
         batch_titles_emb = self.embeds(batch_titles)
         batch_titles_emb = F.dropout(batch_titles_emb, 1 - keep_prop, keep_prop < 1.0)
         title_vecs = RunRnn(self.encrnn, batch_titles_conv, batch_title_length)
-        return self.map2s(title_vec)
-      
+        return F.linear(title_vecs, self.weight[:400], None), F.linear(title_vecs, self.weight[400:], self.bias)
+
       
 class Mish(nn.Module):
+
     def __init__(self):
         super().__init__()
       
-    def forward(self,x):
+    def forward(self, x):
         x = x * (torch.tanh(F.softplus(x)))
         return x
 
