@@ -57,7 +57,6 @@ class SentenceEncoder(nn.Module):
             bidirectional=True
         )
         self.weight = torch.Parameter(torch.Tensor(out_dim, 800))
-        self.bias = torch.Parameter(torch.Tensor(out_dim))
         init_param(self.encrnn)
         init_param(self.weight)
         
@@ -69,7 +68,7 @@ class SentenceEncoder(nn.Module):
         batch_titles_emb = self.embeds(batch_titles)
         batch_titles_emb = F.dropout(batch_titles_emb, 1 - keep_prop, keep_prop < 1.0)
         title_vecs = RunRnn(self.encrnn, batch_titles_conv, batch_title_length)
-        return F.linear(title_vecs, self.weight[:400], None), F.linear(title_vecs, self.weight[400:], self.bias)
+        return F.linear(title_vecs, self.weight[:400], None), F.linear(title_vecs, self.weight[400:], None)
 
       
 class Mish(nn.Module):
