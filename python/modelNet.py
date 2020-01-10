@@ -68,7 +68,7 @@ class SentenceEncoder(nn.Module):
         batch_titles_emb = self.embeds(batch_titles)
         batch_titles_emb = F.dropout(batch_titles_emb, 1 - keep_prop, keep_prop < 1.0)
         title_vecs = RunRnn(self.encrnn, batch_titles_conv, batch_title_length)
-        return F.linear(title_vecs, self.weight[:400], None), F.linear(title_vecs, self.weight[400:], None)
+        return F.linear(title_vecs, self.weight[:,:400], None), F.linear(title_vecs, self.weight[:,400:], None)
 
       
 class Mish(nn.Module):
