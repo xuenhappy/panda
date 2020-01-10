@@ -35,10 +35,10 @@ def plot_lr_decay_pic(start_lr=4e-2,across_step=200000,across_value=2e-3,max_ste
 def save_torch_model(model, out_dir, epoch_num):
     # save model for torch
     torch.save(model, os.path.join(out_dir, "model-%d.pkl" % epoch_num))
-    # save model for numpy
-    state_dict = dict((k, v.cpu().numpy()) for (k, v) in model.state_dict().items())
-    np.savez(os.path.join(out_dir, "model-%d" % epoch_num), **state_dict)
-
+    # save model use h5
+    with h5py.File(os.path.join(out_dir, "model-%d.h5" % epoch_num),"w") as f:
+        for (k, v) in model.state_dict().items():
+            f.create_dataset(k,data=v.cpu().numpy().astype(np.float32))
 
 class TeachSolver():
     """
