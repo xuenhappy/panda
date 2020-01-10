@@ -68,7 +68,7 @@ class SentenceEncoder(nn.Module):
         batch_titles_emb = self.embeds(batch_titles)
         batch_titles_emb = F.dropout(batch_titles_emb, 1 - keep_prop, keep_prop < 1.0)
         title_vecs = RunRnn(self.encrnn, batch_titles_conv, batch_title_length)
-        return F.linear(title_vecs, self.weight[:,:400], None), F.linear(title_vecs, self.weight[:,400:], None)
+        return F.linear(title_vecs, self.weight[:, :400], None), F.linear(title_vecs, self.weight[:, 400:], None)
 
       
 class Mish(nn.Module):
@@ -97,3 +97,57 @@ class Quantizer(torch.nn.Module):
 
     def distance(self, x, y):
         return self.predict(torch.cat([self.map(x), self.map(y)], -1)) 
+    
+    
+import utils
+
+
+class SentencePredict(nn.Module):
+    """
+    init the sentence
+    """
+
+    def __init__(self, word_num, emb_size, tags_weight, nsampled):
+        super(SentencePredict, self).__init__()
+        self.predictor = SentenceEncoder(word_num, emb_size)
+        self.embedd = utils.SampledSoftMaxCrossEntropy(emb_size, tags_weight, nsampled)
+        
+    def forward(self, batch_sentence, batch_tags_with_idx, keep_prop):
+        """
+        batch_sentence shape:batch_size×word_size
+        batch_tags_with_idx:list((start,end,tag))
+        """
+        batch_sentence_length=[]
+        batch_indices_st=[]
+        batch_indices_et=[]
+        batch_tags=[]
+        
+        for i,batch in enumerate(batch_tags_with_idx):
+            offset=i*batch_sentence.shape[1]
+            for s,e,tag in batch:
+                batch_indices_st.append(offset+s)
+                batch_indices_et.append(offset+e)
+                batch_tags.append(batch_tags)
+            batch_sentence_length.append(batch[-1][1])
+            
+        
+        batch_sentence=torch.from_numpy(batch_sentence)
+        batch_sentence_length=torch.LongTensor(batch_sentence_length)
+        batch_indices_st=torch.LongTensor(batch_indices_st)
+        batch_indices_et=torch.LongTensor(batch_indices_et)
+        batch_tags=torch.LongTensor(batch_tags)
+        
+        
+        if torch.cuda.is_available():
+            batch_sentence=batch_sentence
+            batch_sentence_length=batch_sentence_length.cuda()
+            batch_indices_st=batch_indices_st.cuda()
+            batch_indices_et=batch_indices_et.cuda()
+            batch_tags=batch_tags.cuda()
+        
+        batch_sentence_fw_encoding, batch_sentence_bw_encoding = self.predictor(batch_sentence, batch_sentence_length, keep_prop)
+        word_embs_st = batch_sentence_fw_encoding.reshape(-1,emb_size).index_select(0, batch_indices_st)
+        word_embs_et = batch_sentence_bw_encoding.reshape(-1,emb_size).index_select(0, batch_indices_et)
+        word_embs = word_embs_st + word_embs_et
+        return self.embedd(word_embs, batch_tags).mean()
+
