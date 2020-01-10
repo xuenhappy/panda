@@ -18,6 +18,10 @@ import org.jblas.FloatMatrix;
  */
 public class SmartCellQuantizer implements CellQuantizer {
 	private static final String TAG_FOMAT = "<%s>";
+	/**
+	 * the join weight
+	 */
+	private final float[] join_weight;
 
 	/**
 	 * the base vec
@@ -33,11 +37,13 @@ public class SmartCellQuantizer implements CellQuantizer {
 	 */
 	private final CellPresenter presenter;
 
-	public SmartCellQuantizer(WordVecDic vecDic, Measurement measurement, CellPresenter PrePresenter) {
+	public SmartCellQuantizer(WordVecDic vecDic, Measurement measurement, CellPresenter PrePresenter,
+			float[] join_weight) {
 		super();
 		this.vecDic = vecDic;
 		this.measurement = measurement;
 		this.presenter = PrePresenter;
+		this.join_weight = join_weight;
 	}
 
 	@Override
@@ -59,15 +65,11 @@ public class SmartCellQuantizer implements CellQuantizer {
 			tmp.clear();
 			// ori embedding data
 			float[] r = cell.getEmbeding();
-			if (r != null) {
-				assert vecDic.dimSize() == r.length;
-				embedings.add(r);
-			}
+			assert r == null || vecDic.dimSize() == r.length;
 			// dict embedding data
 			float[] v = this.vecDic.embeding(cell.word.image);
 			if (v != null) {
-				embedings.add(v);
-				cell.setEmbeding(avg(embedings));
+				cell.setEmbeding(join(r, v));
 				continue;
 			}
 			// types embedding data
@@ -83,8 +85,23 @@ public class SmartCellQuantizer implements CellQuantizer {
 			for (CellType m : tmp)
 				embedings.add(this.vecDic.embeding(String.format(TAG_FOMAT, m.toString())));
 
-			cell.setEmbeding(avg(embedings));
+			cell.setEmbeding(join(r, avg(embedings)));
 		}
+	}
+
+	/**
+	 * unin data and ori
+	 * 
+	 * @param r
+	 * @param v
+	 * @return
+	 */
+	private float[] join(float[] r, float[] v) {
+		if (r == null)
+			return v;
+		for (int i = 0; i < v.length; i++)
+			v[i] = v[i] * join_weight[i] + r[i] * (1 - join_weight[i]);
+		return v;
 	}
 
 	private float[] avg(ArrayList<float[]> embedings) {

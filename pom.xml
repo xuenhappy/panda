@@ -50,6 +50,12 @@
 			<version>1.2.4</version>
 		</dependency>
 
+		<!--<dependency>
+			<groupId>com.googlecode.matrix-toolkits-java</groupId>
+			<artifactId>mtj</artifactId>
+			<version>1.0.2</version>
+		</dependency>-->
+
 		<dependency>
 			<groupId>cisd</groupId>
 			<artifactId>jhdf5</artifactId>
@@ -126,5 +132,5 @@
 		</plugins>
 	</build>
 
-	
+
 </project>
