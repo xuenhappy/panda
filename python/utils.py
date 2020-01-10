@@ -10,7 +10,7 @@ class SampledSoftMaxCrossEntropy(nn.Module):
         tags_weight is a list that tags
         nsampled how many num of negtive sample 
         """
-        super(SampledSoftmax, self).__init__()
+        super(SampledSoftMaxCrossEntropy, self).__init__()
         self.nsampled = nsampled
         self.weight = Parameter(torch.Tensor(len(tags_weight), emb_size))
         self.bias = Parameter(torch.Tensor(len(tags_weight)))
