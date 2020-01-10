@@ -8,10 +8,10 @@ import sys
 import h5py
 import numpy as np
 import re
-import commands
+import subprocess
 
 def getfileline(filei):
-    l=commands.getoutput("wc -l %s"%filei)
+    l=subprocess.getoutput("wc -l %s"%filei)
     return int(l.split()[0])
 
 SX=re.compile(" (?! )")
