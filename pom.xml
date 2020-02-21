@@ -50,11 +50,8 @@
 			<version>1.2.4</version>
 		</dependency>
 
-		<!--<dependency>
-			<groupId>com.googlecode.matrix-toolkits-java</groupId>
-			<artifactId>mtj</artifactId>
-			<version>1.0.2</version>
-		</dependency>-->
+		<!--<dependency> <groupId>com.googlecode.matrix-toolkits-java</groupId> 
+			<artifactId>mtj</artifactId> <version>1.0.2</version> </dependency> -->
 
 		<dependency>
 			<groupId>cisd</groupId>
@@ -67,15 +64,22 @@
 			<artifactId>json</artifactId>
 			<version>20190722</version>
 		</dependency>
-		
-		
+
+
 		<!-- https://mvnrepository.com/artifact/com.intel.analytics.bigdl.native/mkl-java -->
 		<dependency>
-		    <groupId>com.intel.analytics.bigdl.native</groupId>
-		    <artifactId>mkl-java</artifactId>
-		    <version>0.3.0</version>
+			<groupId>com.intel.analytics.bigdl.native</groupId>
+			<artifactId>mkl-java</artifactId>
+			<version>0.3.0</version>
+			<exclusions>
+				<exclusion>
+					<groupId>*</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
-		
+
+
 	</dependencies>
 
 
