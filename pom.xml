@@ -65,8 +65,11 @@
 			<version>20190722</version>
 		</dependency>
 
-
-
+		<dependency>
+			<groupId>org.bamboo.nlp</groupId>
+			<artifactId>mkl4j</artifactId>
+			<version>0.0.1</version>
+		</dependency>
 
 	</dependencies>
 

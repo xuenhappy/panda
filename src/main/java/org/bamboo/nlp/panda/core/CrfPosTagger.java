@@ -1,17 +1,13 @@
 package org.bamboo.nlp.panda.core;
 
-import java.io.FileInputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.util.List;
 
+import org.bamboo.mkl4j.CRF;
+import org.bamboo.mkl4j.FloatMatrix;
 import org.bamboo.nlp.panda.tools.IOSerializable;
-import org.jblas.FloatMatrix;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 /**
  * the pos tagger base on crf model
@@ -20,52 +16,21 @@ import org.json.JSONObject;
  *
  */
 public class CrfPosTagger implements PosTagger, IOSerializable {
+
 	/**
-	 * tag trans param
+	 * model
 	 */
-	private FloatMatrix trans;
-	/**
-	 * tag embedding map
-	 */
-	private FloatMatrix map;
+	private CRF<FloatMatrix> crf;
 	/**
 	 * tags explain
 	 */
 	private String[] tags;
-	
-	
-	public CrfPosTagger(JSONObject conf) throws JSONException, IOException {
-		this(conf.getString("model.data"));
-	}
-	
 
-	public CrfPosTagger(String conf_data) throws IOException {
-		FileInputStream ins = new FileInputStream(conf_data);
-		try {
-			load(ins);
-		} finally {
-			ins.close();
-		}
-	}
 
 	public CrfPosTagger(float[][] trans, float[][] map, String[] tags) {
-		this.trans = new FloatMatrix(trans);
-		this.map = new FloatMatrix(map);
 		this.tags = tags;
-		assert tags.length == this.map.columns;
-	}
-
-	/**
-	 * save this model
-	 * 
-	 * @param out
-	 * @throws IOException
-	 */
-	public void save(OutputStream out) throws IOException {
-		ObjectOutputStream o = new ObjectOutputStream(out);
-		o.writeObject(trans.toArray2());
-		o.writeObject(map.toArray2());
-		o.writeObject(tags);
+		assert tags.length == map[0].length;
+		this.crf = new CRF<FloatMatrix>(new FloatMatrix(trans), new FloatMatrix(map));
 	}
 
 	@Override
@@ -74,8 +39,7 @@ public class CrfPosTagger implements PosTagger, IOSerializable {
 		int i = 0;
 		for (WordCell cell : tokens)
 			datas[i++] = cell.getEmbeding();
-		FloatMatrix score = new FloatMatrix(datas).mmul(map);
-		int[] tags = viterbi_decode(score);
+		int[] tags = crf.viterbi_decode(new FloatMatrix(datas));
 		i = 0;
 		for (WordCell cell : tokens)
 			cell.setFeature(tags[i++]);
@@ -86,39 +50,17 @@ public class CrfPosTagger implements PosTagger, IOSerializable {
 		return tags[feature];
 	}
 
-	/**
-	 * decode the data
-	 */
-	private int[] viterbi_decode(FloatMatrix score) {
-		FloatMatrix[] trellis = new FloatMatrix[score.rows];
-		int[][] backpointers = new int[score.rows][];
-		trellis[0] = score.getRow(0);
-		for (int t = 1; t < score.rows; t++) {
-			FloatMatrix v = trans.addRowVector(trellis[t - 1]);
-			trellis[t] = score.getRow(t).addi(v.columnMaxs());
-			backpointers[t] = v.columnArgmaxs();
-		}
-
-		int[] viterbi = new int[score.rows];
-		viterbi[viterbi.length - 1] = trellis[viterbi.length - 1].argmax();
-		for (int j = viterbi.length - 2; j >= 0; j--)
-			viterbi[j] = backpointers[j + 1][viterbi[j + 1]];
-		// float viterbi_score=trellis[trellis.length-1].max();
-		return viterbi;
+	@SuppressWarnings("unchecked")
+	@Override
+	public void load(DataInputStream in) throws IOException {
+		this.crf = (CRF<FloatMatrix>) CRF.load(in);
+		this.tags = in.readUTF().split("\\s+");
 	}
 
 	@Override
-	public void load(InputStream in) throws IOException {
-		ObjectInputStream ins = new ObjectInputStream(in);
-		try {
-			this.trans = new FloatMatrix((float[][]) ins.readObject());
-			this.map = new FloatMatrix((float[][]) ins.readObject());
-			this.tags = (String[]) ins.readObject();
-			assert tags.length == this.map.columns;
-		} catch (ClassNotFoundException e) {
-			throw new IOException("data not for model :" + e.getMessage());
-		}
-
+	public void save(DataOutputStream out) throws IOException {
+		this.crf.save(out);
+		out.writeUTF(String.join("\n", tags));
 	}
 
 }

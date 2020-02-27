@@ -6,9 +6,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.bamboo.mkl4j.MKL;
 import org.bamboo.nlp.panda.core.CellMap.Cursor;
 import org.bamboo.nlp.panda.tools.WordVecDic;
-import org.jblas.FloatMatrix;
 
 /**
  * a smart CellQuantizer base on wordvec and neural network
@@ -109,13 +109,10 @@ public class SmartCellQuantizer implements CellQuantizer {
 		if (num == 1)// single do nothing
 			return embedings.get(0);
 		float[] c = embedings.get(0);
-		FloatMatrix out = new FloatMatrix(1, c.length, c);
-		for (int i = 1; i < embedings.size(); i++) {
-			float[] m = embedings.get(i);
-			out.addi(new FloatMatrix(1, m.length, m));
-		}
-		out.divi(embedings.size());
-		return out.data;
+		for (int i = 1; i < embedings.size(); i++)
+			MKL.vsAdd(c.length, c, 0, embedings.get(i), 0, c, 0);
+		MKL.vsscal(c.length, 1.0f / embedings.size(), c, 0, 1);
+		return c;
 	}
 
 	@Override

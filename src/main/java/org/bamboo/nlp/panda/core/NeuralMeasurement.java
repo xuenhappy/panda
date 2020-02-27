@@ -1,13 +1,11 @@
 package org.bamboo.nlp.panda.core;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
+import org.bamboo.mkl4j.FloatMatrix;
+import org.bamboo.mkl4j.TDense;
 import org.bamboo.nlp.panda.tools.IOSerializable;
-import org.bamboo.nlp.panda.tools.NeuralNetwork;
-import org.bamboo.nlp.panda.tools.NeuralNetwork.TDense;
-import org.jblas.FloatMatrix;
 
 /**
  * a neural network measurement
@@ -16,45 +14,40 @@ import org.jblas.FloatMatrix;
  *
  */
 public class NeuralMeasurement implements Measurement, IOSerializable {
-	private NeuralNetwork.TDense map;
-	private NeuralNetwork.TDense join;
-	private NeuralNetwork.TDense out;
+	private TDense<FloatMatrix> map;
+	private TDense<FloatMatrix> join;
+	private TDense<FloatMatrix> out;
 
-	public NeuralMeasurement(TDense map, TDense join, TDense out) {
+	public NeuralMeasurement(TDense<FloatMatrix> map, TDense<FloatMatrix> join, TDense<FloatMatrix> out) {
 		super();
 		this.map = map;
 		this.join = join;
 		this.out = out;
 	}
 
-	public NeuralMeasurement() {
-		super();
-		this.map = new TDense();
-		this.join = new TDense();
-		this.out = new TDense();
-	}
-
 	@Override
 	public double measure(float[] f1, float[] f2) {
 		FloatMatrix i1 = new FloatMatrix(1, f1.length, f1);
 		FloatMatrix i2 = new FloatMatrix(1, f2.length, f2);
-		FloatMatrix m = FloatMatrix.concatHorizontally(map.forward(i1), map.forward(i2));
+		FloatMatrix m = map.forward(i1).concatColumn(map.forward(i2));
 		FloatMatrix res = out.forward(join.forward(m));
 		return res.get(0, 0);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public void load(InputStream in) throws IOException {
-		this.map.load(in);
-		this.join.load(in);
-		this.out.load(in);
+	public void load(DataInputStream in) throws IOException {
+		this.map = TDense.load(in);
+		this.join = TDense.load(in);
+		this.out = TDense.load(in);
 	}
 
 	@Override
-	public void save(OutputStream out) throws IOException {
+	public void save(DataOutputStream out) throws IOException {
 		this.map.save(out);
 		this.join.save(out);
 		this.out.save(out);
+
 	}
 
 }
