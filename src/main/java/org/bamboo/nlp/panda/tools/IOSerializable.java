@@ -1,8 +1,8 @@
 package org.bamboo.nlp.panda.tools;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 
 /**
  * can load and save from stream
@@ -16,7 +16,7 @@ public interface IOSerializable {
 	 * @param in
 	 * @throws IOException
 	 */
-	public void load(InputStream in)throws IOException;
+	public void load(DataInputStream in)throws IOException;
 	
 	
 	
@@ -25,7 +25,7 @@ public interface IOSerializable {
 	 * @param out
 	 * @throws IOException
 	 */
-	public void save(OutputStream out)throws IOException;
+	public void save(DataOutputStream out)throws IOException;
 	
 	
 }
