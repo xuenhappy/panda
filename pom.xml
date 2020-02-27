@@ -69,7 +69,7 @@
 		<!-- https://mvnrepository.com/artifact/com.intel.analytics.bigdl.native/mkl-java -->
 		<dependency>
 			<groupId>com.intel.analytics.bigdl.native</groupId>
-			<artifactId>mkl-java</artifactId>
+			<artifactId>mkl-java-mac</artifactId>
 			<version>0.3.0</version>
 			<exclusions>
 				<exclusion>
