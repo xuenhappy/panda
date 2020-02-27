@@ -1,17 +1,16 @@
 package org.bamboo.nlp.panda.core;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Iterator;
 
+import org.bamboo.mkl4j.FloatMatrix;
+import org.bamboo.mkl4j.TDense;
+import org.bamboo.mkl4j.TGRU;
 import org.bamboo.nlp.panda.core.CellMap.Cursor;
 import org.bamboo.nlp.panda.tools.IOSerializable;
-import org.bamboo.nlp.panda.tools.NeuralNetwork;
-import org.bamboo.nlp.panda.tools.NeuralNetwork.TDense;
-import org.bamboo.nlp.panda.tools.NeuralNetwork.TGRU;
 import org.bamboo.nlp.panda.tools.WordVecDic;
-import org.jblas.FloatMatrix;
 
 /**
  * a lstm neural network cell presenter
@@ -20,22 +19,13 @@ import org.jblas.FloatMatrix;
  *
  */
 public class LstmCellPresenter implements CellPresenter, IOSerializable {
-	private NeuralNetwork.TGRU gru_fw;
-	private NeuralNetwork.TGRU gru_bw;
-	private NeuralNetwork.TDense map;
+	private TGRU<FloatMatrix> gru_fw;
+	private TGRU<FloatMatrix> gru_bw;
+	private TDense<FloatMatrix> map;
 	private final WordVecDic char_emding_dic;
 
-	/**
-	 * new a empty model
-	 */
-	public LstmCellPresenter(WordVecDic char_emding_dic) {
-		this.gru_fw = new NeuralNetwork.TGRU();
-		this.gru_bw = new TGRU();
-		this.map = new TDense();
-		this.char_emding_dic = char_emding_dic;
-	}
-
-	public LstmCellPresenter(TGRU gru_fw, TGRU gru_bw, TDense map, WordVecDic char_emding_dic) {
+	public LstmCellPresenter(TGRU<FloatMatrix> gru_fw, TGRU<FloatMatrix> gru_bw, TDense<FloatMatrix> map,
+			WordVecDic char_emding_dic) {
 		super();
 		this.gru_fw = gru_fw;
 		this.gru_bw = gru_bw;
@@ -69,32 +59,34 @@ public class LstmCellPresenter implements CellPresenter, IOSerializable {
 			FloatMatrix bw_s = bw[cell.word.begin];
 			FloatMatrix fw_e = fw[cell.word.end - 1];
 			FloatMatrix bw_e = bw[cell.word.end - 1];
-			cell.setEmbeding(map.forward(concatHorizontally(fw_s, bw_s, fw_e, bw_e)).data);
+			cell.setEmbeding(map.forward(concatHorizontally(fw_s, bw_s, fw_e, bw_e)).toArray());
 		}
 
 	}
 
 	private static FloatMatrix concatHorizontally(FloatMatrix A, FloatMatrix B, FloatMatrix C, FloatMatrix D) {
 		float[] data = new float[A.columns + B.columns + C.columns + D.columns];
-		System.arraycopy(A.data, 0, data, 0, A.columns);
-		System.arraycopy(B.data, 0, data, A.columns, B.columns);
-		System.arraycopy(C.data, 0, data, A.columns + B.columns, C.columns);
-		System.arraycopy(D.data, 0, data, A.columns + B.columns + C.columns, D.columns);
+		System.arraycopy(A.toArray(), 0, data, 0, A.columns);
+		System.arraycopy(B.toArray(), 0, data, A.columns, B.columns);
+		System.arraycopy(C.toArray(), 0, data, A.columns + B.columns, C.columns);
+		System.arraycopy(D.toArray(), 0, data, A.columns + B.columns + C.columns, D.columns);
 		return new FloatMatrix(1, data.length, data);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public void load(InputStream in) throws IOException {
-		this.gru_fw.load(in);
-		this.gru_bw.load(in);
-		this.map.load(in);
+	public void load(DataInputStream in) throws IOException {
+		this.gru_fw = TGRU.load(in);
+		this.gru_bw = TGRU.load(in);
+		this.map = TDense.load(in);
 	}
 
 	@Override
-	public void save(OutputStream out) throws IOException {
+	public void save(DataOutputStream out) throws IOException {
 		this.gru_fw.save(out);
 		this.gru_bw.save(out);
 		this.map.save(out);
+
 	}
 
 }

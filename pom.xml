@@ -65,21 +65,11 @@
 			<version>20190722</version>
 		</dependency>
 
-
-		<!-- https://mvnrepository.com/artifact/com.intel.analytics.bigdl.native/mkl-java -->
 		<dependency>
-			<groupId>com.intel.analytics.bigdl.native</groupId>
-			<artifactId>mkl-java-mac</artifactId>
-			<version>0.3.0</version>
-			<exclusions>
-				<exclusion>
-					<groupId>*</groupId>
-					<artifactId>*</artifactId>
-				</exclusion>
-			</exclusions>
+			<groupId>org.bamboo.nlp</groupId>
+			<artifactId>mkl4j</artifactId>
+			<version>0.0.1</version>
 		</dependency>
-
-
 	</dependencies>
 
 
