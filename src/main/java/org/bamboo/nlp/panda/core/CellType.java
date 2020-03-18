@@ -69,9 +69,29 @@ public enum CellType {
 	 */
 	ORDER,
 	/**
+	 * 游戏
+	 */
+	GAME,
+	/**
+	 * 影视媒体
+	 */
+	MEDIA,
+	/**
 	 * 动物
 	 */
-	ANIMALS, 
+	ANIMALS,
+	/**
+	 * 网站网址
+	 */
+	WEB,
+	/**
+	 * 计算机术语
+	 */
+	COMPU,
+	/**
+	 * 生物
+	 */
+	BIOLOGY,
 	/**
 	 * 植物
 	 */
@@ -99,6 +119,14 @@ public enum CellType {
 	/**
 	 * 星座
 	 */
-	ZODIAC;
+	ZODIAC,
+	/**
+	 * 药品
+	 */
+	DRUGS,
+	/**
+	 * 交通工具
+	 */
+	TRAFFIC;
 
 }
