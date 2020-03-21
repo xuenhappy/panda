@@ -67,7 +67,7 @@ public class SmartCellQuantizer implements CellQuantizer {
 			float[] r = cell.getEmbeding();
 			assert r == null || vecDic.dimSize() == r.length;
 			// dict embedding data
-			float[] v = this.vecDic.embeding(cell.word.image);
+			float[] v = this.vecDic.embeding(cell.word.image.trim().isEmpty() ? "</s>" : cell.word.image);
 			if (v != null) {
 				cell.setEmbeding(join(r, v));
 				continue;
@@ -82,9 +82,11 @@ public class SmartCellQuantizer implements CellQuantizer {
 				tmp.remove(CellType.CHW);
 			if (tmp.size() > 1 && tmp.contains(CellType.ENG))
 				tmp.remove(CellType.ENG);
-			for (CellType m : tmp)
-				embedings.add(this.vecDic.embeding(String.format(TAG_FOMAT, m.toString())));
-
+			for (CellType m : tmp) {
+				float[] c=this.vecDic.embeding(String.format(TAG_FOMAT, m.toString()));
+				if(c!=null)
+					embedings.add(c);
+			}
 			cell.setEmbeding(join(r, avg(embedings)));
 		}
 	}
@@ -105,6 +107,8 @@ public class SmartCellQuantizer implements CellQuantizer {
 	}
 
 	private float[] avg(ArrayList<float[]> embedings) {
+		if(embedings.isEmpty())
+			return this.vecDic.defaultEmb();
 		int num = embedings.size();
 		if (num == 1)// single do nothing
 			return embedings.get(0);

@@ -1,7 +1,6 @@
 package org.bamboo.nlp.panda.tools;
 
 import java.util.*;
-import java.util.regex.Pattern;
 
 /**
  * a double array trie
@@ -11,7 +10,6 @@ import java.util.regex.Pattern;
  * @param <V>
  */
 public class DoubleArrayTrie<V> {
-	private static final Pattern EMPTY = Pattern.compile("\\s+");
 
 	/**
 	 * build array trie tmp used
@@ -232,18 +230,13 @@ public class DoubleArrayTrie<V> {
 		 */
 		private void addKeyword(StrList keyword, int index) {
 			State currentState = this.rootState;
-			int num_reduce = 0;
 			for (CharSequence seq : keyword) {
 				//lower and reduce space
 				seq = seq.toString().toLowerCase();
-				if (EMPTY.matcher(seq).matches()) {
-					num_reduce++;
-					continue;
-				}
 				currentState = currentState.addState(getCode(seq));
 			}
 			currentState.addEmit(index);
-			l[index] = keyword.size() - num_reduce;
+			l[index] = keyword.size();
 		}
 
 		/**
@@ -505,11 +498,6 @@ public class DoubleArrayTrie<V> {
 		for (CharSequence seq : text) {
 			//lower and reduce space
 			seq = seq.toString().toLowerCase();
-			if (EMPTY.matcher(seq).matches()) {
-				position++;
-				continue;
-			}
-
 			currentState = getState(currentState, getCode(seq));
 			int[] hitArray = output[currentState];
 			if (hitArray == null) {
@@ -535,8 +523,6 @@ public class DoubleArrayTrie<V> {
 		int currentState = 0;
 		for (CharSequence chr : text) {
 			chr = chr.toString().toLowerCase();
-			if (EMPTY.matcher(chr).matches()) 
-				continue;
 			currentState = getState(currentState, getCode(chr));
 			int[] hitArray = output[currentState];
 			if (hitArray != null)
