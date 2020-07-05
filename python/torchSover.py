@@ -1,5 +1,5 @@
-#!/usr/bin/env python  
-# -*- coding: utf-8 -*- 
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 '''
 Created on Jan 4, 2018
 基于pytorch的求解器
@@ -13,32 +13,31 @@ from torch import optim
 import math
 
 
-
-def plot_lr_decay_pic(start_lr=4e-2,across_step=200000,across_value=2e-3,max_step=500000):
+def plot_lr_decay_pic(start_lr=4e-2, across_step=200000, across_value=2e-3, max_step=500000):
     try:
         import matplotlib.pyplot as plt
         plt.style.use('ggplot')
-        decay_rate=math.log(across_value/start_lr)/across_step
-        x=np.arange(1,max_step).astype(np.float32)
-        y=start_lr*np.exp(decay_rate*x)
-        plt.plot(x,y)
-        plt.title("$dr=%.5f$"%decay_rate)
+        decay_rate = math.log(across_value/start_lr)/across_step
+        x = np.arange(1, max_step).astype(np.float32)
+        y = start_lr*np.exp(decay_rate*x)
+        plt.plot(x, y)
+        plt.title("$dr=%.5f$" % decay_rate)
         plt.grid(c='g')
-        plt.savefig('lr.png', format='png',dpi=800)
-        print ("decay_rate=%f"%decay_rate)
+        plt.savefig('lr.png', format='png', dpi=800)
+        print("decay_rate=%f" % decay_rate)
     except:
         pass
-    
 
-    
-    
+
 def save_torch_model(model, out_dir, epoch_num):
+    import h5py
     # save model for torch
     torch.save(model, os.path.join(out_dir, "model-%d.pkl" % epoch_num))
     # save model use h5
-    with h5py.File(os.path.join(out_dir, "model-%d.h5" % epoch_num),"w") as f:
+    with h5py.File(os.path.join(out_dir, "model-%d.h5" % epoch_num), "w") as f:
         for (k, v) in model.state_dict().items():
-            f.create_dataset(k,data=v.cpu().numpy().astype(np.float32))
+            f.create_dataset(k, data=v.cpu().numpy().astype(np.float32))
+
 
 class TeachSolver():
     """
@@ -53,8 +52,8 @@ class TeachSolver():
         self.train_iter = train_iter
         self.test_iter = test_iter
         for (k, v) in conf.items():
-            setattr(self, k, v)    
-        
+            setattr(self, k, v)
+
     def build(self):
         learn_rate = 5e-2 if not hasattr(self, "lrate") else self.lrate
         self.lrate = learn_rate
@@ -66,22 +65,22 @@ class TeachSolver():
                 weight_p += [p]
 
         self.optimizer = optim.SGD([
-            {'params': weight_p, 'weight_decay':1e-5},
-            {'params': bias_p, 'weight_decay':0}
+            {'params': weight_p, 'weight_decay': 1e-5},
+            {'params': bias_p, 'weight_decay': 0}
         ], lr=learn_rate)
 
         timestamp = str(int(time.time()))
         out_dir = os.path.abspath(os.path.join(os.path.curdir, self.model_outdir, timestamp))
-        print ("Write model to {}".format(out_dir))
+        print("Write model to {}".format(out_dir))
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
         self.out_dir = out_dir
 
     def adjust_learning_rate(self, epoch):
         """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
-        decay_rate=-8.04718956217e-06
+        decay_rate = -8.04718956217e-06
         lr = self.lrate*math.exp(decay_rate*epoch)
-        lr=max(2e-4,lr)
+        lr = max(2e-4, lr)
         for param_group in self.optimizer.param_groups:
             param_group['lr'] = lr
 
@@ -96,7 +95,7 @@ class TeachSolver():
                 while iter_num < self.iter_num:
                     iter_num += 1
                     step += 1
-                    self.optimizer.zero_grad()  
+                    self.optimizer.zero_grad()
                     loss = self.model.loss_func(*td)
                     loss.backward()
                     # torch.nn.utils.clip_grad_norm_(self.model.parameters(),1,'inf')
@@ -111,4 +110,3 @@ class TeachSolver():
             print("\t")
             save_torch_model(self.model, self.out_dir, epoch_num)
             self.train_iter.reset()
-           
