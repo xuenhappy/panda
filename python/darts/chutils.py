@@ -12,7 +12,7 @@ Copyright 2021 - 2020 Your Company, Moka
 '''
 
 import os
-__all__ = ['charSplit', 'charType', 'utf8len']
+__all__ = ['charSplit', 'charType', 'utf8Len', 'wordLen']
 
 __py_dir = os.path.split(os.path.realpath(__file__))[0]
 
@@ -76,6 +76,30 @@ def charType(ch):
     return '<UNK>'
 
 
+def wordLen(unichrs):
+    nums = 0
+    buf_type = ''
+    for ch in unichrs:
+        ctype = charType(ch)
+        if ctype != buf_type:
+            if (ctype == '<EMPTY>' and buf_type == '<POS>') or (buf_type == '<EMPTY>' and ctype == '<POS>'):
+                buf_type = '<POS>'
+                continue
+
+            if buf_type:
+                nums += 1
+                buf_type = ''
+
+        buf_type = ctype
+        if buf_type == "<CJK>":
+            nums += 1
+            buf_type = ''
+            continue
+    if buf_type:
+        nums += 1
+    return nums
+
+
 def charSplit(unicode_strs):
     chr_buffer = []
     buf_type = None
@@ -92,9 +116,17 @@ def charSplit(unicode_strs):
             chr_buffer = []
 
         buf_type = ctype
+
         if buf_type == "<CJK>":
             yield ch, buf_type
             continue
+
+        # uplower split
+        #if len(chr_buffer)>0 and buf_type == "<ENG>":
+        #    if 'a'<=chr_buffer[-1]<='z' and 'A'<=ch<='Z':
+        #        yield "".join(chr_buffer), buf_type
+        #        chr_buffer = []
+
         chr_buffer.append(ch)
 
     if chr_buffer:
@@ -114,7 +146,7 @@ def __utf8len(c):
     raise ValueError('Invalid Unicode character: ' + hex(codepoint))
 
 
-def utf8len(s):
+def utf8Len(s):
     """
     claulate the string utf8 len without create a bytes
     """
