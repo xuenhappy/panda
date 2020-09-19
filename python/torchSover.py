@@ -30,7 +30,7 @@ def plot_lr_decay_pic(start_lr=4e-2, across_step=200000, across_value=2e-3, max_
 
 
 def save_torch_model(model, out_dir, epoch_num):
-    import h5py
+    import torch
     # save model for torch
     torch.save(model, os.path.join(out_dir, "model-%d.pkl" % epoch_num))
     # save model use h5
