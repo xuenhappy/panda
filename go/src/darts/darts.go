@@ -51,5 +51,5 @@ type CellPresenter interface{
 //interface of a prepre
 type CellQuantizer interface{
 	//distance of the pre and next cell
-	distance(pre WCell, next WCell) float32
+	distance(pre *WCell, next *WCell) float32
 }
