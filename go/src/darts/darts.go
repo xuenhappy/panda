@@ -35,12 +35,12 @@ type CellMap struct {
 //regcinzer
 type CellRecognizer interface {
 	//recognizer all Wcell possable in the atomlist
-	read(content *Atom, size uint32, cmap *CellMap)
+	read(content []Atom, cmap *CellMap)
 }
 
 type CellPresenter interface {
 	//set the cmap val data embeding
-	embed(context *Atom, size uint32, cmap *CellMap)
+	embed(context []Atom, cmap *CellMap)
 }
 
 //interface of a prepre
