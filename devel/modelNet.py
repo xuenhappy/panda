@@ -4,6 +4,7 @@
 '''
 @author: enxu
 '''
+import utils
 import numpy as np
 import torch
 import torch.nn as nn
@@ -59,7 +60,7 @@ class SentenceEncoder(nn.Module):
         self.weight = torch.Parameter(torch.Tensor(out_dim, 800))
         init_param(self.encrnn)
         init_param(self.weight)
-        
+
     def forward(self, batch_sentence, batch_sentence_length, keep_prop):
         """
         batch_sentence shape:batch_size×word_size
@@ -70,36 +71,16 @@ class SentenceEncoder(nn.Module):
         title_vecs = RunRnn(self.encrnn, batch_titles_conv, batch_title_length)
         return F.linear(title_vecs, self.weight[:, :400], None), F.linear(title_vecs, self.weight[:, 400:], None)
 
-      
-class Mish(nn.Module):
 
-    def __init__(self):
-        super().__init__()
-      
-    def forward(self, x):
-        x = x * (torch.tanh(F.softplus(x)))
-        return x
+class Quantizer(nn.Module):
 
-   
-class Quantizer(torch.nn.Module):
-
-    def __init__(self, input_size, n_hidden):
-        torch.nn.Module.__init__(self)
-        self.map = nn.Sequential(
-            nn.Linear(input_size, 400),
-        )
-        self.predict = torch.nn.Sequential(
-            torch.nn.Linear(400 * 2, n_hidden),
-            torch.nn.Tanh(),
-            torch.nn.Linear(n_hidden, 1),
-            Mish()
-        )
+    def __init__(self, input_size):
+        nn.Module.__init__(self)
+        self.Kmap = nn.Linear(input_size, 50)
+        self.Vmap = nn.Linear(input_size, 50)
 
     def distance(self, x, y):
-        return self.predict(torch.cat([self.map(x), self.map(y)], -1)) 
-    
-    
-import utils
+        return F.selu((self.Kmap(x)*self.Vmap(y)).sum(-1))
 
 
 class SentencePredict(nn.Module):
@@ -111,43 +92,40 @@ class SentencePredict(nn.Module):
         super(SentencePredict, self).__init__()
         self.predictor = SentenceEncoder(word_num, emb_size)
         self.embedd = utils.SampledSoftMaxCrossEntropy(emb_size, tags_weight, nsampled)
-        
+
     def forward(self, batch_sentence, batch_tags_with_idx, keep_prop):
         """
         batch_sentence shape:batch_size×word_size
         batch_tags_with_idx:list((start,end,tag))
         """
-        batch_sentence_length=[]
-        batch_indices_st=[]
-        batch_indices_et=[]
-        batch_tags=[]
-        
-        for i,batch in enumerate(batch_tags_with_idx):
-            offset=i*batch_sentence.shape[1]
-            for s,e,tag in batch:
+        batch_sentence_length = []
+        batch_indices_st = []
+        batch_indices_et = []
+        batch_tags = []
+
+        for i, batch in enumerate(batch_tags_with_idx):
+            offset = i*batch_sentence.shape[1]
+            for s, e, tag in batch:
                 batch_indices_st.append(offset+s)
                 batch_indices_et.append(offset+e)
                 batch_tags.append(batch_tags)
             batch_sentence_length.append(batch[-1][1])
-            
-        
-        batch_sentence=torch.from_numpy(batch_sentence)
-        batch_sentence_length=torch.LongTensor(batch_sentence_length)
-        batch_indices_st=torch.LongTensor(batch_indices_st)
-        batch_indices_et=torch.LongTensor(batch_indices_et)
-        batch_tags=torch.LongTensor(batch_tags)
-        
-        
+
+        batch_sentence = torch.from_numpy(batch_sentence)
+        batch_sentence_length = torch.LongTensor(batch_sentence_length)
+        batch_indices_st = torch.LongTensor(batch_indices_st)
+        batch_indices_et = torch.LongTensor(batch_indices_et)
+        batch_tags = torch.LongTensor(batch_tags)
+
         if torch.cuda.is_available():
-            batch_sentence=batch_sentence
-            batch_sentence_length=batch_sentence_length.cuda()
-            batch_indices_st=batch_indices_st.cuda()
-            batch_indices_et=batch_indices_et.cuda()
-            batch_tags=batch_tags.cuda()
-        
+            batch_sentence = batch_sentence
+            batch_sentence_length = batch_sentence_length.cuda()
+            batch_indices_st = batch_indices_st.cuda()
+            batch_indices_et = batch_indices_et.cuda()
+            batch_tags = batch_tags.cuda()
+
         batch_sentence_fw_encoding, batch_sentence_bw_encoding = self.predictor(batch_sentence, batch_sentence_length, keep_prop)
-        word_embs_st = batch_sentence_fw_encoding.reshape(-1,emb_size).index_select(0, batch_indices_st)
-        word_embs_et = batch_sentence_bw_encoding.reshape(-1,emb_size).index_select(0, batch_indices_et)
+        word_embs_st = batch_sentence_fw_encoding.reshape(-1, emb_size).index_select(0, batch_indices_st)
+        word_embs_et = batch_sentence_bw_encoding.reshape(-1, emb_size).index_select(0, batch_indices_et)
         word_embs = word_embs_st + word_embs_et
         return self.embedd(word_embs, batch_tags).mean()
-
