@@ -15,6 +15,7 @@ package darts
 
 import (
 	"sort"
+	"container/list"
 	"github.com/emirpasic/gods/maps/treemap"
 )
 
@@ -22,11 +23,11 @@ import (
 const UINT32_MAX = ^uint32(0)
 
 type StringIter interface{
-	next() (*string, bool) // a string iter
+	Next() *string // a string iter
 }
 
 type KVIter interface{
-	next() (StringIter, uint32) // k,v iter
+	Next() (StringIter, uint32) // k,v iter
 }
 
  //===================================================================================Double Array Trie
@@ -39,7 +40,7 @@ type Trie struct{
 }
 
 // get string code
-func (t *Trie) getcode(string *word) uint32{
+func (t *Trie) getcode(word *string) uint32{
 	code,ok :=t.codemap[*word]
 	if(!ok){
 		return len(t.codemap)+1
@@ -131,7 +132,7 @@ func insertSorted(s []int, e int)[]int{
 }   
 
 //add emit
-func (s *State) addEmit(uint32 keyword){
+func (s *State) addEmit(keyword uint32){
 	if keyword!=UINT32_MAX{
 		s.emits=insertSorted(s.emits,keyword)
 	}
@@ -149,17 +150,20 @@ func (s *State) isAcceptable(){
 	return s.depth > 0 && len(s.emits)>0
 }
 
-func (s *State) setFailure(failState *state, fail []uint64){
+func (s *State) setFailure(failState *State, fail []uint64){
 	s.failure = failState
 	fail[s.index] = failState.index
 }
 
 func (s *State) nextState(character uint32, ignoreRootState bool) *State{
-	nextState:=s.success[character]
-	if (!ignoreRootState) && (nextState!=nil) && (s.depth == 0){
+	nextState,_:=s.success.Get(character)
+	if (!ignoreRootState) && (nextState==nil) && (s.depth == 0){
 		nextState = s
 	}
-	return nextState
+	if(nextState==nil){
+		return nil
+	}
+	return nextState.(*State)
 }
 
 func (s *State) nextState(character uint32) *State{
@@ -170,7 +174,7 @@ func (s *State) addState(character uint32) *State{
 	nextS := s.nextState(character, true)
 	if nextS==nil{
 		nextS = newState(s.depth+1)
-		s.success[character]=nextS
+		s.success.Put(character,nextS)
 	}
 	return nextS
 }
@@ -222,41 +226,73 @@ func (b *Builder) zipWeight(){
 func (b * Builder) constructFailureStates(){
 	b.trie.fail=make([]uint32,b.size+1)
 	b.trie.output=make([][]uint32,b.size+1)
+	queue:=list.New()
 	
-	queue = []
-
-	for depthOneState in self.rootState.getStates():
-		depthOneState.setFailure(self.rootState, self.fail)
-		queue.append(depthOneState)
-		b.trie.output[targetState.index] = depthOneState.emits
-		self._constructOutput(depthOneState)
-
-	while len(queue) > 0:
-		currentState = queue.pop(0)
-		for transition in currentState.getTransitions():
-			targetState = currentState.nextState(transition)
-			queue.append(targetState)
-			traceFailureState = currentState.failure
-			while traceFailureState.nextState(transition) is None:
+	for state:=range b.rootState.success.Values(){
+		queue.PushBack(state)
+		b.trie.output[targetState.index] = state.(*State).emits
+	}
+	for{
+		if queue.Len()<1{
+			break
+		}
+		currentState:=queue.Remove(queue.Front()).(*State)
+		for key:=range b.rootState.success.Keys(){
+			transition:=key.(uint32)
+			targetState:= currentState.nextState(transition)
+			queue.PushBack(targetState)
+			traceFailureState:= currentState.failure
+			for{
+				if(traceFailureState.nextState(transition)!=nil){
+					break
+				}
 				traceFailureState = traceFailureState.failure
-			newFailureState = traceFailureState.nextState(transition)
-			targetState.setFailure(newFailureState, self.fail)
+			}
+			newFailureState := traceFailureState.nextState(transition)
+			targetState.setFailure(newFailureState, b.trie.fail)
+			for _,e :=range newFailureState.emits{
+				targetState.addEmit(e)
+			}
 			targetState.emits |= newFailureState.emits
 			b.trie.output[targetState.index] = targetState.emits
+		}
+	}
 }
 
 
 
+func (b *Builder)addAllKeyword(kvs KVIter){
+	max_code,index:= 0,-1
+	t:=b.trie
+	for{
+		index+=1
+		k,v:=kvs.Next()
+		if k==nil{
+			break
+		}
+		lens:=0
+		currentState:=b.rootState
+		for{
+			s:=k.Next()
+			if s==nil{
+				break
+			}
+			lens+=1
+			code:=b.trie.getcode(s)
+			t.codemap[*s]=code
+			currentState=currentState.addState(code)
+		}
+		currentState.addEmit(index)
+		t.l=append(t.l,lens)
+		max_code += lens
+		t.v=append(t.v, v)
 
-func (b *Builder) build(kvs KVIter){
-	max_code := b.addAllKeyword(kvs)
-	//build double array tire base on tire
-	b.buildDoubleArrayTrie(max_code)
-	//build failure table and merge output table
-	b.constructFailureStates()
-	b.rootState = nil
-	b.zipWeight()
+		
+
+	}
+	return int((max_code+len(t.codemap))/1.5) + 1
 }
+
 //resize data
 func (b *Builder) resize(newSize uint32){
 	base2 := make([]uint32,newSize,newSize)
@@ -273,43 +309,9 @@ func (b *Builder) resize(newSize uint32){
 	b.allocSize=newSize
 }
 
-func _addAllKeyword(self, kvs, strKey){
-	max_code = 0
-	self.l = []
-	self.v = []
-	for index, kv in enumerate(kvs):
-		currentState = self.rootState
-		lens = 0
-		for seq in kv[0]:
-			seq = strKey(seq)
-			if seq is None:
-				continue
-			lens += 1
-			_seq = str(seq).lower()
-			_code = self.codemap.get(_seq, len(self.codemap)+1)
-			self.codemap[_seq] = _code
-			currentState = currentState.addState(_code)
-		if lens < 1:
-			continue
-		currentState.emits.add(index)
-		self.l.append(lens)
-		max_code += lens
-		self.v.append(kv[1])
-	return int((max_code+len(self.codemap))/1.5) + 1
-}
 
-func fetch(parent *State){
-	siblings:=make([],parent.Size()+1)
-	if parent.isAcceptable():
-		fakeNode := newState(-(parent.depth + 1))
-		fakeNode.addEmit(parent.getLargestValueId())
-		siblings.append((0, fakeNode))
-	for (k, v) in sorted(parent.success.items(), key=lambda x: x[0]):
-		siblings.append((k + 1, v))
-	return siblings
-}
 
-func _insert(self, siblings){
+func (b *Builder) insert(siblings){
 	begin = 0
 	pos = max(siblings[0][0] + 1, self.nextCheckPos) - 1
 	nonzero_num = 0
@@ -362,12 +364,23 @@ func _insert(self, siblings){
 	return begin
 }
 
-func _buildDoubleArrayTrie(self, max_code){
-	self.progress = 0
-	self.resize(max_code+10)
-	self.base[0] = 1
-	self.nextCheckPos = 0
-	root_node = self.rootState
+
+
+func fetch(parent *State){
+	siblings:=make([],parent.Size()+1)
+	if parent.isAcceptable():
+		fakeNode := newState(-(parent.depth + 1))
+		fakeNode.addEmit(parent.getLargestValueId())
+		siblings.append((0, fakeNode))
+	for (k, v) in sorted(parent.success.items(), key=lambda x: x[0]):
+		siblings.append((k + 1, v))
+	return siblings
+}
+
+func (b *Builder) buildDoubleArrayTrie(max_code uint32){
+	b.resize(max_code+10)
+	b.trie.base[0]=1
+	root_node := b.rootState
 	siblings = self._fetch(root_node)
 	if not siblings:
 		return
@@ -376,8 +389,15 @@ func _buildDoubleArrayTrie(self, max_code){
 
 
 
-
-
+func (b *Builder) build(kvs KVIter){
+	max_code := b.addAllKeyword(kvs)
+	//build double array tire base on tire
+	b.buildDoubleArrayTrie(max_code)
+	//build failure table and merge output table
+	b.constructFailureStates()
+	b.rootState = nil
+	b.zipWeight()
+}
 
 //compile the data
 func Compile(kv_iter KVIter) *Trie{
