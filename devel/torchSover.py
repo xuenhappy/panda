@@ -13,14 +13,14 @@ Copyright 2021 - 2020 Your Company, Moka
 import sys
 import os
 import time
+import math
 import numpy as np
 import torch
 from torch import optim
-import math
+from .torchtools import drop_module_grad
 
 
 def save_torch_model(model, out_dir, epoch_num):
-    import torch
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     # save model for torch
@@ -31,8 +31,8 @@ def save_torch_model(model, out_dir, epoch_num):
     print("Write model to {}".format(out_dir))
 
 
-def load_init_model(model, modeldir):
-    model_path = os.path.join(modeldir, "model-init.npz")
+def load_init_model(model, modeldir, filename="model-init.npz"):
+    model_path = os.path.join(modeldir, filename)
     if not os.path.exists(model_path):
         return
     param_dict = dict((k, torch.from_numpy(v)) for k, v in np.load(model_path).items())
@@ -41,62 +41,87 @@ def load_init_model(model, modeldir):
 
 
 class TeachSolver():
-    """
-    有监督分类模型求解器
-    """
+    def __init__(self, model, train_iter, conf={}):
+        self.train_iter = train_iter
+        for (k, v) in conf.items():
+            setattr(self, k, v)
 
-    def __init__(self, model, train_iter, test_iter=None, conf={}):
         self.model = model
         if torch.cuda.is_available():
             self.model = self.model.cuda()
-        self.train_iter = train_iter
-        self.test_iter = test_iter
-        for (k, v) in conf.items():
-            setattr(self, k, v)
-        learn_rate = 0.001 if not hasattr(self, "lrate") else self.lrate
-        self.lrate = learn_rate
-        weight_p, bias_p = [], []
-        for name, p in self.model.named_parameters():
-            if 'bias' in name:
-                bias_p.append(p)
-            else:
-                weight_p.append(p)
-
-        self.optimizer = optim.RMSprop([
-            {'params': weight_p, 'weight_decay': 1e-5},
-            {'params': bias_p, 'weight_decay': 0}
-        ], lr=learn_rate, alpha=0.9)
 
         modeldir = os.path.abspath(os.path.join(os.path.curdir, self.model_outdir))
         self.out_dir = os.path.join(modeldir, str(int(time.time())))
         load_init_model(self.model, modeldir)
 
+        self.max_grad_csum_step = 10 if not hasattr(self, 'max_grad_csum_step') else self.max_grad_csum_step
+        self.max_grad_csum_step = max(1, self.max_grad_csum_step)
+
+        self.lrate = 0.001 if not hasattr(self, "lrate") else self.lrate
+        self.lrate = max(1e-4, self.lrate)
+
+        weight_p, bias_p = [], []
+        for name, p in self.model.named_parameters():
+            if not p.requires_grad:
+                continue
+            if ('bias' in name) or ('bnorm' in name):
+                bias_p.append(p)
+                continue
+            weight_p.append(p)
+
+        self.optimizer = optim.Adam([
+            {'params': weight_p, 'weight_decay': 1e-5},
+            {'params': bias_p, 'weight_decay': 0}
+        ], lr=self.lrate)
+
     def solve(self):
+        # init flag data
         step, epoch_num, sample_num = 0, 0, 0
         losses = []
-        while epoch_num < self.epoch_num:  # 全部样本的迭代次数
+        self.optimizer.zero_grad()
+
+        def apply_grad():
+            alpha = 1/math.sqrt(len(losses))
+            for p in self.model.parameters():
+                if not p.requires_grad:
+                    continue
+                if hasattr(p, 'drop_grad') and p.drop_grad:
+                    p.grad = None
+                if p.grad is None:
+                    continue
+                p.grad *= alpha
+            # apply loss and clear grad
+            self.optimizer.step()
+            self.optimizer.zero_grad()
+            avg_loss = sum(losses)/len(losses)
+            losses.clear()
+            return avg_loss
+
+        # iter data
+        while epoch_num < self.epoch_num:
+            sample_num = 0
             epoch_num += 1
+            # test if could write and sample could use
+            self.train_iter.reset()
+            save_torch_model(self.model, self.out_dir, epoch_num)
+            # iter samples
             print("start %d ecoph iter train" % epoch_num)
             for td in self.train_iter:
                 sample_num += 1
-                iter_num = 0
-                while iter_num < self.iter_num:
-                    iter_num += 1
-                    step += 1
-                    self.optimizer.zero_grad()
-                    loss = self.model(*td)
-                    losses.append(loss)
-                    if len(losses) >= 50:
-                        all_loss = sum(losses)/len(losses)
-                        losses = []
-                        all_loss.backward()
-                        # torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1, 'inf')
-                        # for p in self.model.parameters():
-                        #     print(p.grad, p.shape)
-                        self.optimizer.step()
-                        print('train [epoch|sample|step]:[%d|%d|%d] loss:%g' % (epoch_num, sample_num, step, float(all_loss)))
-                if sample_num % 200000 == 0:
+                step += 1
+                # csum loss
+                loss = self.model(*td)
+                loss.backward()
+                losses.append(float(loss.cpu()))
+                # apply loss
+                if len(losses) >= self.max_grad_csum_step:
+                    avg_loss = apply_grad()
+                    print('train [epoch|step|sample]:[%d|%d|%d] loss:%g' % (epoch_num, step, sample_num, avg_loss))
+
+                if step % 200000 == 0:
                     save_torch_model(self.model, self.out_dir, epoch_num)
 
-            save_torch_model(self.model, self.out_dir, epoch_num)
-            self.train_iter.reset()
+        # last update
+        if len(losses) > 0:
+            apply_grad()
+        save_torch_model(self.model, self.out_dir, epoch_num)

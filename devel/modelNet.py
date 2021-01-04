@@ -11,22 +11,34 @@ import torch.nn as nn
 from torch.nn import functional as F
 
 
+class SMelmo(nn.Module):
+    def __init__(self, token_size):
+        super().__init__()
+        self.embeding = nn.Embedding(token_size, 150)
+        self.drop = nn.Dropout(0.5)
+        self.rnn = nn.GRU(150, 180, batch_first=True, bidirectional=True)
+        self.map = nn.Linear(180*2, 150)
+        self.bd = nn.BatchNorm1d(150)
+
+    def forward(self, input, seq_lengths, input_add=None):
+        """
+        input is a long tensor and shape is (N,T),
+        seq_lengths is a long tensor and shape is (N,)
+        seq_length and inpt must be in same device
+        """
+        embeding = self.drop(self.embeding(input))
+        if input_add is not None:
+            embeding += input_add
+        out = self.map(run_rnn(self.rnn, embeding, seq_lengths))+embeding
+        return self.bd(out.view(-1, out.size(2))).view(out.shape)
+
+
 def init_param(model):
     for p in model.parameters():
         if len(p.shape) == 2:
             nn.init.xavier_uniform_(p)
             continue
         nn.init.zeros_(p)
-
-
-def RunRnn(rnn, inputs, seq_lengths):
-    sorted_seq_lengths, indices = torch.sort(seq_lengths, descending=True)
-    _, desorted_indices = torch.sort(indices, descending=False)
-    inputs = inputs.index_select(0, indices)
-    packed_inputs = nn.utils.rnn.pack_padded_sequence(inputs, sorted_seq_lengths, batch_first=True)
-    res, _ = rnn(packed_inputs)
-    padded_res, _ = nn.utils.rnn.pad_packed_sequence(res, batch_first=True, total_length=inputs.shape[1])
-    return padded_res.index_select(0, desorted_indices).contiguous()
 
 
 def batch_select(tensor, index):
