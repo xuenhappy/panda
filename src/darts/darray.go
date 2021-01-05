@@ -14,10 +14,8 @@ package darts
 
 import (
 	"container/list"
-	"sort"
-
 	"github.com/emirpasic/gods/maps/treemap"
-	"gonum.org/v1/gonum/integrate"
+	"sort"
 )
 
 //StringIter is Used for parer input
