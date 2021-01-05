@@ -47,6 +47,12 @@ type Trie struct {
 	codemap              map[string]int
 }
 
+func newTrie() *Trie {
+	t := new(Trie)
+	t.codemap = make(map[string]int)
+	return t
+}
+
 // get string code
 func (t *Trie) getcode(word *string) int {
 	code, ok := t.codemap[*word]
@@ -58,9 +64,16 @@ func (t *Trie) getcode(word *string) int {
 
 //trans
 func (t *Trie) transitionWithRoot(nodePos int, c int) int {
-	b := t.base[nodePos]
+	b := 0
+	if nodePos < len(t.base) {
+		b = t.base[nodePos]
+	}
 	p := b + c + 1
-	if b != t.check[p] {
+	x := 0
+	if p < len(t.check) {
+		x = t.check[p]
+	}
+	if b != x {
 		if nodePos == 0 {
 			return 0
 		}
@@ -155,6 +168,7 @@ func (s *State) setFailure(failState *State, fail []int) {
 
 func (s *State) nextState(character int, ignoreRootState bool) *State {
 	nextState, _ := s.success.Get(character)
+
 	if (!ignoreRootState) && (nextState == nil) && (s.depth == 0) {
 		nextState = s
 	}
@@ -201,13 +215,13 @@ type Builder struct {
 
 //zip no use data
 func (b *Builder) zipWeight() {
-	msize := b.size + int(len(b.trie.codemap)) + 1
+	msize := b.size
 	newBase := make([]int, msize)
-	copy(b.trie.base[:b.size], newBase[:b.size])
+	copy(newBase[:b.size], b.trie.base[:b.size])
 	b.trie.base = newBase
 
 	newCheck := make([]int, msize, msize)
-	copy(b.trie.check[:b.size], newCheck[:b.size])
+	copy(newCheck[:b.size], b.trie.check[:b.size])
 	b.trie.check = newCheck
 }
 
@@ -218,7 +232,7 @@ func (b *Builder) constructFailureStates() {
 
 	cpy := func(ori []int) []int {
 		dest := make([]int, len(ori))
-		copy(ori, dest)
+		copy(dest, ori)
 		return dest
 	}
 
@@ -233,7 +247,7 @@ func (b *Builder) constructFailureStates() {
 	}
 	for queue.Len() > 0 {
 		currentState := queue.Remove(queue.Front()).(*State)
-		for _, key := range b.rootState.success.Keys() {
+		for _, key := range currentState.success.Keys() {
 			transition := key.(int)
 			targetState := currentState.nextState(transition, false)
 			queue.PushBack(targetState)
@@ -266,10 +280,14 @@ func (b *Builder) addAllKeyword(kvs StrLabelIter) int {
 			currentState = currentState.addState(code)
 		}
 		currentState.addEmit(index)
-		t.l = append(t.l, int(lens))
+		t.l = append(t.l, lens)
+		if lens > t.maxlen {
+			t.maxlen = lens
+		}
 		maxCode += lens
 		t.v = append(t.v, v)
 	}
+	t.maxlen++
 	return int(float32(maxCode+len(t.codemap))/1.5) + 1
 }
 
@@ -279,9 +297,9 @@ func (b *Builder) resize(newSize int) {
 	check2 := make([]int, newSize)
 	used2 := make([]bool, newSize)
 	if b.allocSize > 0 {
-		copy(b.trie.base[:int(b.allocSize)], base2[:int(b.allocSize)])
-		copy(b.trie.check[:int(b.allocSize)], check2[:int(b.allocSize)])
-		copy(b.used[:int(b.allocSize)], used2[:int(b.allocSize)])
+		copy(base2[:int(b.allocSize)], b.trie.base[:int(b.allocSize)])
+		copy(check2[:int(b.allocSize)], b.trie.check[:int(b.allocSize)])
+		copy(used2[:int(b.allocSize)], b.used[:int(b.allocSize)])
 	}
 	b.trie.base = base2
 	b.trie.check = check2
@@ -404,8 +422,8 @@ func (b *Builder) build(kvs StrLabelIter) {
 //Compile the data
 func Compile(kvs StrLabelIter) *Trie {
 	var builder Builder
-	builder.rootState = new(State)
-	builder.trie = new(Trie)
+	builder.rootState = newState(0)
+	builder.trie = newTrie()
 	builder.build(kvs)
 	//clear mem
 	result := builder.trie
