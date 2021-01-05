@@ -20,30 +20,32 @@ type WCell struct {
 	feat   uint16     //represent which type of this word this is used for tagger
 }
 
-//map cursor used
-type _Cursor struct {
-	pre, lack *_Cursor // pointer of this node pre and lack
-	val       *WCell   // val of the node
-	idx       uint32   // index of this course in list
+//Cursor map cursor used
+type Cursor struct {
+	pre, lack *Cursor // pointer of this node pre and lack
+	val       *WCell  // val of the node
+	idx       uint32  // index of this course in list
 }
 
+//CellMap used
 type CellMap struct {
-	head               _Cursor //this cellMap size
-	rows, colums, size uint32  // this cellmap countor
+	head               Cursor //this cellMap size
+	rows, colums, size uint32 // this cellmap countor
 }
 
-//regcinzer
+//CellRecognizer is code
 type CellRecognizer interface {
 	//recognizer all Wcell possable in the atomlist
 	read(content *[]Atom, cmap *CellMap)
 }
 
+//CellPresenter is embed
 type CellPresenter interface {
 	//set the cmap val data embeding
 	embed(context *[]Atom, cmap *CellMap)
 }
 
-//interface of a prepre
+//CellQuantizer interface of a prepre
 type CellQuantizer interface {
 	//distance of the pre and next cell
 	distance(pre *WCell, next *WCell) float32
