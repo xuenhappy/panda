@@ -13,9 +13,13 @@ package darts
  */
 
 import (
+	"bytes"
 	"container/list"
-	"github.com/emirpasic/gods/maps/treemap"
+	"encoding/binary"
+	"fmt"
 	"sort"
+
+	"github.com/emirpasic/gods/maps/treemap"
 )
 
 //StringIter is Used for parer input
@@ -45,6 +49,30 @@ type Trie struct {
 	output               [][]int
 	maxlen               int
 	codemap              map[string]int
+}
+
+//WriteToBytes is write the trie to bytes
+func (t *Trie) WriteToBytes() ([]byte, error) {
+	buf := new(bytes.Buffer)
+	fmt.Println(t)
+	err := binary.Write(buf, binary.BigEndian, t)
+	if err != nil {
+		fmt.Println("-++--", err)
+		return []byte{}, err
+	}
+	return buf.Bytes(), nil
+}
+
+//ReadFromBytes read data
+func ReadFromBytes(dat []byte) *Trie {
+	t := new(Trie)
+	buf := bytes.NewBuffer(dat)
+	err := binary.Read(buf, binary.BigEndian, t)
+	if err != nil {
+		fmt.Println("********", err)
+		return nil
+	}
+	return t
 }
 
 func newTrie() *Trie {

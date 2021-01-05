@@ -78,7 +78,10 @@ func TestParseText(t *testing.T) {
 	findstr := "dcfabcdef"
 	finditer := chrs(&findstr)
 
-	trie.ParseText(finditer, func(s, e, l int) {
+	d, _ := trie.WriteToBytes()
+	ss := darts.ReadFromBytes(d)
+
+	ss.ParseText(finditer, func(s, e, l int) {
 		t.Log("find ", s, e, l, findstr[s:e])
 	})
 
