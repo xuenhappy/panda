@@ -213,10 +213,6 @@ type Builder struct {
 	 */
 	allocSize int
 	/**
-	* a parameter controls the memory growth speed of the dynamic array
-	 */
-	progress int
-	/**
 	* the next position to check unused memory
 	 */
 	nextCheckPos int
@@ -402,7 +398,6 @@ func (b *Builder) insert(queue *list.List) {
 		newSiblings := fetch(kv.v.(*State))
 		if len(newSiblings) < 1 {
 			t.Base[begin+kv.k.(int)] = -(kv.v.(*State).getMaxValueIDgo() + 1)
-			b.progress++
 		} else {
 			queue.PushBack(Pair{begin + kv.k.(int), newSiblings})
 		}
