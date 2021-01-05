@@ -1,6 +1,7 @@
 package test
 
 import (
+	"bytes"
 	"panda/darts"
 	"testing"
 )
@@ -77,10 +78,18 @@ func TestParseText(t *testing.T) {
 	trie := darts.Compile(&data)
 	findstr := "dcfabcdef"
 	finditer := chrs(&findstr)
-
-	d, _ := trie.WriteToBytes()
-	ss := darts.ReadFromBytes(d)
-
+	t.Log("-------------------find----------------")
+	t.Log(findstr)
+	buf := new(bytes.Buffer)
+	err := trie.WriteToBytes(buf)
+	if err != nil {
+		t.Log(err)
+	}
+	ss := new(darts.Trie)
+	err = ss.ReadFromBytes(buf)
+	if err != nil {
+		t.Log(err)
+	}
 	ss.ParseText(finditer, func(s, e, l int) {
 		t.Log("find ", s, e, l, findstr[s:e])
 	})

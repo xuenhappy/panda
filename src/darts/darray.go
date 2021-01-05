@@ -15,8 +15,7 @@ package darts
 import (
 	"bytes"
 	"container/list"
-	"encoding/binary"
-	"fmt"
+	"encoding/gob"
 	"sort"
 
 	"github.com/emirpasic/gods/maps/treemap"
@@ -44,48 +43,34 @@ type StrLabelIter interface {
 
 //Trie is a double array trie
 type Trie struct {
-	check, base, fail, l []int
-	v                    []int
-	output               [][]int
-	maxlen               int
-	codemap              map[string]int
+	Check, Base, Fail, L []int
+	V                    []int
+	OutPut               [][]int
+	MaxLen               int
+	CodeMap              map[string]int
 }
 
 //WriteToBytes is write the trie to bytes
-func (t *Trie) WriteToBytes() ([]byte, error) {
-	buf := new(bytes.Buffer)
-	fmt.Println(t)
-	err := binary.Write(buf, binary.BigEndian, t)
-	if err != nil {
-		fmt.Println("-++--", err)
-		return []byte{}, err
-	}
-	return buf.Bytes(), nil
+func (t *Trie) WriteToBytes(buf *bytes.Buffer) error {
+	return gob.NewEncoder(buf).Encode(t)
 }
 
 //ReadFromBytes read data
-func ReadFromBytes(dat []byte) *Trie {
-	t := new(Trie)
-	buf := bytes.NewBuffer(dat)
-	err := binary.Read(buf, binary.BigEndian, t)
-	if err != nil {
-		fmt.Println("********", err)
-		return nil
-	}
-	return t
+func (t *Trie) ReadFromBytes(buf *bytes.Buffer) error {
+	return gob.NewDecoder(buf).Decode(t)
 }
 
 func newTrie() *Trie {
 	t := new(Trie)
-	t.codemap = make(map[string]int)
+	t.CodeMap = make(map[string]int)
 	return t
 }
 
 // get string code
 func (t *Trie) getcode(word *string) int {
-	code, ok := t.codemap[*word]
+	code, ok := t.CodeMap[*word]
 	if !ok {
-		return len(t.codemap) + 1
+		return len(t.CodeMap) + 1
 	}
 	return code
 }
@@ -93,13 +78,13 @@ func (t *Trie) getcode(word *string) int {
 //trans
 func (t *Trie) transitionWithRoot(nodePos int, c int) int {
 	b := 0
-	if nodePos < len(t.base) {
-		b = t.base[nodePos]
+	if nodePos < len(t.Base) {
+		b = t.Base[nodePos]
 	}
 	p := b + c + 1
 	x := 0
-	if p < len(t.check) {
-		x = t.check[p]
+	if p < len(t.Check) {
+		x = t.Check[p]
 	}
 	if b != x {
 		if nodePos == 0 {
@@ -114,7 +99,7 @@ func (t *Trie) transitionWithRoot(nodePos int, c int) int {
 func (t *Trie) getstate(currentState int, character int) int {
 	newCurrentState := t.transitionWithRoot(currentState, character)
 	for newCurrentState == -1 {
-		currentState = t.fail[currentState]
+		currentState = t.Fail[currentState]
 		newCurrentState = t.transitionWithRoot(currentState, character)
 	}
 	return newCurrentState
@@ -123,17 +108,17 @@ func (t *Trie) getstate(currentState int, character int) int {
 //ParseText parse a text list hit ( [start,end),tagidx)
 func (t *Trie) ParseText(text StringIter, hit func(int, int, int)) {
 	currentState, indexBufferPos := 0, 0
-	indexBufer := make([]int, t.maxlen)
+	indexBufer := make([]int, t.MaxLen)
 	for text.Next() {
 		position := text.Postion()
 		seq := text.Word()
-		indexBufer[indexBufferPos%t.maxlen] = position
+		indexBufer[indexBufferPos%t.MaxLen] = position
 		indexBufferPos++
 		currentState = t.getstate(currentState, t.getcode(seq))
-		hitArray := t.output[currentState]
+		hitArray := t.OutPut[currentState]
 		for _, h := range hitArray {
-			preIndex := (indexBufferPos - t.l[h]) % t.maxlen
-			hit(indexBufer[preIndex], position+1, t.v[h])
+			preIndex := (indexBufferPos - t.L[h]) % t.MaxLen
+			hit(indexBufer[preIndex], position+1, t.V[h])
 		}
 	}
 }
@@ -245,17 +230,17 @@ type Builder struct {
 func (b *Builder) zipWeight() {
 	msize := b.size
 	newBase := make([]int, msize)
-	copy(newBase[:b.size], b.trie.base[:b.size])
-	b.trie.base = newBase
+	copy(newBase[:b.size], b.trie.Base[:b.size])
+	b.trie.Base = newBase
 
 	newCheck := make([]int, msize, msize)
-	copy(newCheck[:b.size], b.trie.check[:b.size])
-	b.trie.check = newCheck
+	copy(newCheck[:b.size], b.trie.Check[:b.size])
+	b.trie.Check = newCheck
 }
 
 func (b *Builder) constructFailureStates() {
-	b.trie.fail = make([]int, b.size+1)
-	b.trie.output = make([][]int, b.size+1)
+	b.trie.Fail = make([]int, b.size+1)
+	b.trie.OutPut = make([][]int, b.size+1)
 	queue := list.New()
 
 	cpy := func(ori []int) []int {
@@ -266,10 +251,10 @@ func (b *Builder) constructFailureStates() {
 
 	for _, state := range b.rootState.success.Values() {
 		depthOneState := state.(*State)
-		depthOneState.setFailure(b.rootState, b.trie.fail)
+		depthOneState.setFailure(b.rootState, b.trie.Fail)
 		queue.PushBack(state)
 		if len(depthOneState.emits) > 0 {
-			b.trie.output[depthOneState.index] = cpy(depthOneState.emits)
+			b.trie.OutPut[depthOneState.index] = cpy(depthOneState.emits)
 		}
 
 	}
@@ -284,11 +269,11 @@ func (b *Builder) constructFailureStates() {
 				traceFailureState = traceFailureState.failure
 			}
 			newFailureState := traceFailureState.nextState(transition, false)
-			targetState.setFailure(newFailureState, b.trie.fail)
+			targetState.setFailure(newFailureState, b.trie.Fail)
 			for _, e := range newFailureState.emits {
 				targetState.addEmit(e)
 			}
-			b.trie.output[targetState.index] = cpy(targetState.emits)
+			b.trie.OutPut[targetState.index] = cpy(targetState.emits)
 		}
 	}
 }
@@ -304,19 +289,19 @@ func (b *Builder) addAllKeyword(kvs StrLabelIter) int {
 			s := k.Word()
 			lens++
 			code := b.trie.getcode(s)
-			t.codemap[*s] = code
+			t.CodeMap[*s] = code
 			currentState = currentState.addState(code)
 		}
 		currentState.addEmit(index)
-		t.l = append(t.l, lens)
-		if lens > t.maxlen {
-			t.maxlen = lens
+		t.L = append(t.L, lens)
+		if lens > t.MaxLen {
+			t.MaxLen = lens
 		}
 		maxCode += lens
-		t.v = append(t.v, v)
+		t.V = append(t.V, v)
 	}
-	t.maxlen++
-	return int(float32(maxCode+len(t.codemap))/1.5) + 1
+	t.MaxLen++
+	return int(float32(maxCode+len(t.CodeMap))/1.5) + 1
 }
 
 //resize data
@@ -325,12 +310,12 @@ func (b *Builder) resize(newSize int) {
 	check2 := make([]int, newSize)
 	used2 := make([]bool, newSize)
 	if b.allocSize > 0 {
-		copy(base2[:int(b.allocSize)], b.trie.base[:int(b.allocSize)])
-		copy(check2[:int(b.allocSize)], b.trie.check[:int(b.allocSize)])
+		copy(base2[:int(b.allocSize)], b.trie.Base[:int(b.allocSize)])
+		copy(check2[:int(b.allocSize)], b.trie.Check[:int(b.allocSize)])
 		copy(used2[:int(b.allocSize)], b.used[:int(b.allocSize)])
 	}
-	b.trie.base = base2
-	b.trie.check = check2
+	b.trie.Base = base2
+	b.trie.Check = check2
 	b.used = used2
 	b.allocSize = newSize
 }
@@ -374,7 +359,7 @@ func (b *Builder) insert(queue *list.List) {
 		if b.allocSize <= pos {
 			b.resize(pos + 1)
 		}
-		if t.check[pos] != 0 {
+		if t.Check[pos] != 0 {
 			nonZeroNum++
 			continue
 		} else if first {
@@ -391,7 +376,7 @@ func (b *Builder) insert(queue *list.List) {
 		}
 		allIszero := true
 		for i := 0; i < len(siblings); i++ {
-			if t.check[begin+siblings[i].k.(int)] != 0 {
+			if t.Check[begin+siblings[i].k.(int)] != 0 {
 				allIszero = false
 				break
 			}
@@ -410,13 +395,13 @@ func (b *Builder) insert(queue *list.List) {
 		b.size = begin + siblings[len(siblings)-1].k.(int) + 1
 	}
 	for i := 0; i < len(siblings); i++ {
-		t.check[begin+siblings[i].k.(int)] = begin
+		t.Check[begin+siblings[i].k.(int)] = begin
 	}
 	for i := 0; i < len(siblings); i++ {
 		kv := siblings[i]
 		newSiblings := fetch(kv.v.(*State))
 		if len(newSiblings) < 1 {
-			t.base[begin+kv.k.(int)] = -(kv.v.(*State).getMaxValueIDgo() + 1)
+			t.Base[begin+kv.k.(int)] = -(kv.v.(*State).getMaxValueIDgo() + 1)
 			b.progress++
 		} else {
 			queue.PushBack(Pair{begin + kv.k.(int), newSiblings})
@@ -424,7 +409,7 @@ func (b *Builder) insert(queue *list.List) {
 		kv.v.(*State).index = begin + kv.k.(int)
 	}
 	if value >= 0 {
-		t.base[value] = begin
+		t.Base[value] = begin
 	}
 }
 
@@ -432,7 +417,7 @@ func (b *Builder) build(kvs StrLabelIter) {
 	maxCode := b.addAllKeyword(kvs)
 	//build double array tire base on tire
 	b.resize(maxCode + 10)
-	b.trie.base[0] = 1
+	b.trie.Base[0] = 1
 	siblings := fetch(b.rootState)
 	if len(siblings) > 0 {
 		queue := list.New()
