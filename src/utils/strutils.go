@@ -23,26 +23,27 @@ import (
 
 var wordmap = make(map[string]string)
 
-func chr(s int) string {
+//Chr is int to string
+func Chr(s int) string {
 	return string(rune(s))
 }
 func loadEmpty(s, e int) {
 	for x := s; x < e; x++ {
-		wordmap[chr(x)] = " "
+		wordmap[Chr(x)] = " "
 	}
 }
 
 func loadBasic() {
 	loadEmpty(0, 0x20+1)
-	wordmap[chr(0x7F)] = " "
+	wordmap[Chr(0x7F)] = " "
 	loadEmpty(8198, 8208)
 	loadEmpty(8232, 8240)
 	loadEmpty(8287, 8304)
 	loadEmpty(0xFE00, 0xFE0F+1)
 	for x := 65281; x <= 65374; x++ {
-		wordmap[chr(x)] = chr(x - 65248)
+		wordmap[Chr(x)] = Chr(x - 65248)
 	}
-	wordmap[chr(12288)] = chr(32)
+	wordmap[Chr(12288)] = Chr(32)
 }
 
 func loadSpecial() {
@@ -62,13 +63,13 @@ func loadSpecial() {
 	wordmap["︱"] = "|"
 	wordmap["｜"] = "|"
 	wordmap["／"] = "/"
-	wordmap[chr(173)] = "-"
-	wordmap[chr(8208)] = "-"
-	wordmap[chr(8209)] = "-"
-	wordmap[chr(8210)] = "-"
-	wordmap[chr(8211)] = "-"
-	wordmap[chr(8212)] = "-"
-	wordmap[chr(8213)] = "-"
+	wordmap[Chr(173)] = "-"
+	wordmap[Chr(8208)] = "-"
+	wordmap[Chr(8209)] = "-"
+	wordmap[Chr(8210)] = "-"
+	wordmap[Chr(8211)] = "-"
+	wordmap[Chr(8212)] = "-"
+	wordmap[Chr(8213)] = "-"
 	wordmap["【"] = "["
 	wordmap["】"] = "]"
 	wordmap["●"] = "·"
@@ -84,7 +85,7 @@ func loadUnVisual() {
 		0xE806, 0xE930, 0xE739, 0xF0A4, 0xE6A4, 0xE69E, 0xF06E, 0xF075, 0xF0B7, 0x009F, 0xF0B7,
 		0xF076, 0xF09F, 0xF0A8, 0xE69F, 0xF097, 0xF0A1}
 	for _, v := range data {
-		wordmap[chr(v)] = ""
+		wordmap[Chr(v)] = ""
 	}
 }
 
