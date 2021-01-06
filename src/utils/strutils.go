@@ -1,5 +1,13 @@
 package utils
 
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"path"
+	"strings"
+)
+
 /*
  * File: strutils.go
  * Project: utils
@@ -12,3 +20,132 @@ package utils
  * -----
  * Copyright 2021 - 2020 Your Company, Moka
  */
+
+var wordmap = make(map[string]string)
+
+func chr(s int) string {
+	return string(rune(s))
+}
+func loadEmpty(s, e int) {
+	for x := s; x < e; x++ {
+		wordmap[chr(x)] = " "
+	}
+}
+
+func loadBasic() {
+	loadEmpty(0, 0x20+1)
+	wordmap[chr(0x7F)] = " "
+	loadEmpty(8198, 8208)
+	loadEmpty(8232, 8240)
+	loadEmpty(8287, 8304)
+	loadEmpty(0xFE00, 0xFE0F+1)
+	for x := 65281; x <= 65374; x++ {
+		wordmap[chr(x)] = chr(x - 65248)
+	}
+	wordmap[chr(12288)] = chr(32)
+}
+
+func loadSpecial() {
+	wordmap["“"] = "\""
+	wordmap["”"] = "\""
+	wordmap["、"] = ","
+	wordmap["〜"] = "~"
+	wordmap["～"] = "~"
+	wordmap["－"] = "-"
+	wordmap["–"] = "-"
+	wordmap["\r"] = ""
+	wordmap["︳"] = "|"
+	wordmap["▎"] = "|"
+	wordmap["ⅰ"] = "i"
+	wordmap["丨"] = "|"
+	wordmap["│"] = "|"
+	wordmap["︱"] = "|"
+	wordmap["｜"] = "|"
+	wordmap["／"] = "/"
+	wordmap[chr(173)] = "-"
+	wordmap[chr(8208)] = "-"
+	wordmap[chr(8209)] = "-"
+	wordmap[chr(8210)] = "-"
+	wordmap[chr(8211)] = "-"
+	wordmap[chr(8212)] = "-"
+	wordmap[chr(8213)] = "-"
+	wordmap["【"] = "["
+	wordmap["】"] = "]"
+	wordmap["●"] = "·"
+	wordmap["•"] = "·"
+	wordmap["~"] = "-"
+}
+
+func loadUnVisual() {
+	data := [...]int{0xf0b7, 0xf0b2, 0xf064, 0xf0e0, 0xf06c, 0xf034, 0xe6a5, 0xe6a3,
+		0xe6a0, 0xE77C, 0xE76E, 0xf077, 0xe710, 0xe711, 0xe712, 0xe713, 0xe723, 0xe793, 0xf06c,
+		0xf0d8, 0xf020, 0xFEFF, 0xF0FC, 0xF0FC, 0xE755, 0xE6D2, 0xE63C, 0xE734, 0xF074, 0xE622,
+		0xF241, 0xE71B, 0xF148, 0xE973, 0xE96E, 0xE96A, 0xE97D, 0xE805, 0xE70D, 0xF258, 0xE7BB,
+		0xE806, 0xE930, 0xE739, 0xF0A4, 0xE6A4, 0xE69E, 0xF06E, 0xF075, 0xF0B7, 0x009F, 0xF0B7,
+		0xF076, 0xF09F, 0xF0A8, 0xE69F, 0xF097, 0xF0A1}
+	for _, v := range data {
+		wordmap[chr(v)] = ""
+	}
+}
+
+func loadFileMap() {
+	filepath, _ := GetExePath()
+	filepath = path.Join(filepath, "data/confusables.json")
+	//filepath := "/home/enxu/Documents/workspace/panda/data/confusables.json"
+	filePtr, err := os.Open(filepath)
+	if err != nil {
+		fmt.Printf("Open file failed [Err:%s]\n", err.Error())
+		return
+	}
+	defer filePtr.Close()
+	var data interface{}
+	err = json.NewDecoder(filePtr).Decode(&data)
+	if err != nil {
+		fmt.Println("Decoder failed", err.Error())
+		return
+	}
+	m := data.(map[string]interface{})
+	for k, v := range m {
+		for _, ch := range v.([]interface{}) {
+			wordmap[ch.(string)] = k
+		}
+	}
+}
+
+func checkMap() {
+	for k, v := range wordmap {
+		if k == v {
+			delete(wordmap, k)
+		}
+		s, ok := wordmap[v]
+		if ok {
+			wordmap[k] = s
+		}
+	}
+	delete(wordmap, "\n")
+	wordmap["\t"] = "    "
+
+}
+
+func init() {
+	loadBasic()
+	loadSpecial()
+	loadUnVisual()
+	loadFileMap()
+	checkMap()
+}
+
+//MapWord is used for replace the unicode
+func MapWord(input *string) string {
+	r := []rune(*input)
+	var builder strings.Builder
+	for _, x := range r {
+		news, ok := wordmap[string(x)]
+		if ok {
+			builder.WriteString(news)
+			continue
+		}
+		builder.WriteRune(x)
+	}
+	return builder.String()
+}
