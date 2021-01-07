@@ -23,22 +23,12 @@ import (
 
 //StringIter is Used for parer input
 type StringIter interface {
-	//Next has next word
-	Next() bool
-	//Word is string
-	Word() *string
-	//Postion postion
-	Postion() int
+	IterStr(func(str *string, postion int) bool)
 }
 
 //StrLabelIter is a input
 type StrLabelIter interface {
-	//Next is hase next pair
-	Next() bool
-	//String is next string
-	String() StringIter
-	//String is next value
-	Label() int
+	IterPair(func(strlist StringIter, label int) bool)
 }
 
 //Trie is a double array trie
@@ -106,21 +96,24 @@ func (t *Trie) getstate(currentState int, character int) int {
 }
 
 //ParseText parse a text list hit ( [start,end),tagidx)
-func (t *Trie) ParseText(text StringIter, hit func(int, int, int)) {
+func (t *Trie) ParseText(text StringIter, hit func(int, int, int) bool) {
 	currentState, indexBufferPos := 0, 0
 	indexBufer := make([]int, t.MaxLen)
-	for text.Next() {
-		position := text.Postion()
-		seq := text.Word()
+	text.IterStr(func(seq *string, position int) bool {
 		indexBufer[indexBufferPos%t.MaxLen] = position
 		indexBufferPos++
 		currentState = t.getstate(currentState, t.getcode(seq))
 		hitArray := t.OutPut[currentState]
 		for _, h := range hitArray {
 			preIndex := (indexBufferPos - t.L[h]) % t.MaxLen
-			hit(indexBufer[preIndex], position+1, t.V[h])
+			val := hit(indexBufer[preIndex], position+1, t.V[h])
+			if val {
+				return true
+			}
 		}
-	}
+		return false
+	})
+
 }
 
 //State is DFA mechine state
@@ -276,18 +269,17 @@ func (b *Builder) constructFailureStates() {
 
 func (b *Builder) addAllKeyword(kvs StrLabelIter) int {
 	maxCode, index, t := 0, -1, b.trie
-	for kvs.Next() {
-		k, v := kvs.String(), kvs.Label()
+	kvs.IterPair(func(k StringIter, v int) bool {
 		index++
 		lens := 0
 		currentState := b.rootState
-		for k.Next() {
-			s := k.Word()
+		k.IterStr(func(s *string, _ int) bool {
 			lens++
 			code := b.trie.getcode(s)
 			t.CodeMap[*s] = code
 			currentState = currentState.addState(code)
-		}
+			return false
+		})
 		currentState.addEmit(index)
 		t.L = append(t.L, lens)
 		if lens > t.MaxLen {
@@ -295,7 +287,9 @@ func (b *Builder) addAllKeyword(kvs StrLabelIter) int {
 		}
 		maxCode += lens
 		t.V = append(t.V, v)
-	}
+
+		return false
+	})
 	t.MaxLen++
 	return int(float32(maxCode+len(t.CodeMap))/1.5) + 1
 }
@@ -318,8 +312,8 @@ func (b *Builder) resize(newSize int) {
 
 //Pair si tmp used
 type Pair struct {
-	k interface{}
-	v interface{}
+	K interface{}
+	V interface{}
 }
 
 func fetch(parent *State) []Pair {
@@ -338,13 +332,13 @@ func fetch(parent *State) []Pair {
 
 func (b *Builder) insert(queue *list.List) {
 	tCurrent := queue.Remove(queue.Front()).(Pair)
-	value, siblings := tCurrent.k.(int), tCurrent.v.([]Pair)
+	value, siblings := tCurrent.K.(int), tCurrent.V.([]Pair)
 
 	begin, nonZeroNum := 0, 0
 	first := true
 	pos := b.nextCheckPos - 1
-	if pos < siblings[0].k.(int) {
-		pos = siblings[0].k.(int)
+	if pos < siblings[0].K.(int) {
+		pos = siblings[0].K.(int)
 	}
 	if b.allocSize <= pos {
 		b.resize(pos + 1)
@@ -363,16 +357,16 @@ func (b *Builder) insert(queue *list.List) {
 			first = false
 		}
 
-		begin = pos - siblings[0].k.(int)
-		if b.allocSize <= (begin + siblings[len(siblings)-1].k.(int)) {
-			b.resize(begin + siblings[len(siblings)-1].k.(int) + 100)
+		begin = pos - siblings[0].K.(int)
+		if b.allocSize <= (begin + siblings[len(siblings)-1].K.(int)) {
+			b.resize(begin + siblings[len(siblings)-1].K.(int) + 100)
 		}
 		if b.used[begin] {
 			continue
 		}
 		allIszero := true
 		for i := 0; i < len(siblings); i++ {
-			if t.Check[begin+siblings[i].k.(int)] != 0 {
+			if t.Check[begin+siblings[i].K.(int)] != 0 {
 				allIszero = false
 				break
 			}
@@ -387,21 +381,21 @@ func (b *Builder) insert(queue *list.List) {
 	}
 	b.used[begin] = true
 
-	if b.size < begin+siblings[len(siblings)-1].k.(int)+1 {
-		b.size = begin + siblings[len(siblings)-1].k.(int) + 1
+	if b.size < begin+siblings[len(siblings)-1].K.(int)+1 {
+		b.size = begin + siblings[len(siblings)-1].K.(int) + 1
 	}
 	for i := 0; i < len(siblings); i++ {
-		t.Check[begin+siblings[i].k.(int)] = begin
+		t.Check[begin+siblings[i].K.(int)] = begin
 	}
 	for i := 0; i < len(siblings); i++ {
 		kv := siblings[i]
-		newSiblings := fetch(kv.v.(*State))
+		newSiblings := fetch(kv.V.(*State))
 		if len(newSiblings) < 1 {
-			t.Base[begin+kv.k.(int)] = -(kv.v.(*State).getMaxValueIDgo() + 1)
+			t.Base[begin+kv.K.(int)] = -(kv.V.(*State).getMaxValueIDgo() + 1)
 		} else {
-			queue.PushBack(Pair{begin + kv.k.(int), newSiblings})
+			queue.PushBack(Pair{begin + kv.K.(int), newSiblings})
 		}
-		kv.v.(*State).index = begin + kv.k.(int)
+		kv.V.(*State).index = begin + kv.K.(int)
 	}
 	if value >= 0 {
 		t.Base[value] = begin

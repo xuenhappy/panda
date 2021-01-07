@@ -7,61 +7,39 @@ import (
 )
 
 type CharIter struct {
-	seq   string
-	index int
+	seq *string
 }
 
 func chrs(v *string) *CharIter {
 	out := new(CharIter)
-	out.index = -1
-	out.seq = *v
+	out.seq = v
 	return out
 }
 
-func (seq *CharIter) Next() bool {
-	seq.index++
-	if seq.index < len(seq.seq) {
-		return true
+func (seq *CharIter) IterStr(do func(*string, int) bool) {
+	for idx, chr := range []rune(*seq.seq) {
+		data := string(chr)
+		if do(&data, idx) {
+			break
+		}
 	}
-	return false
-}
-
-func (seq *CharIter) Word() *string {
-	out := seq.seq[seq.index : seq.index+1]
-	return &out
-}
-
-func (seq *CharIter) Postion() int {
-	return seq.index
-}
-
-type StrPair struct {
-	list  *CharIter
-	label int
 }
 
 type StrPairList struct {
-	datas []*StrPair
-	idx   int
+	datas []darts.Pair
 }
 
-func (list *StrPairList) Next() bool {
-	list.idx++
-	return list.idx < len(list.datas)
-}
-
-func (list *StrPairList) String() darts.StringIter {
-	return list.datas[list.idx].list
-}
-
-//Postion postion
-func (list *StrPairList) Label() int {
-	return list.datas[list.idx].label
+func (list *StrPairList) IterPair(do func(darts.StringIter, int) bool) {
+	for _, pair := range list.datas {
+		strlist, label := pair.K.(darts.StringIter), pair.V.(int)
+		if do(strlist, label) {
+			break
+		}
+	}
 }
 
 func (list *StrPairList) addData(v *string, l int) {
-	str := chrs(v)
-	list.datas = append(list.datas, &StrPair{str, l})
+	list.datas = append(list.datas, darts.Pair{K: chrs(v), V: l})
 }
 
 func TestParseText(t *testing.T) {
@@ -71,7 +49,6 @@ func TestParseText(t *testing.T) {
 	t.Log(s2)
 	t.Log(s3)
 	data := StrPairList{}
-	data.idx = -1
 	data.addData(&s1, 0)
 	data.addData(&s2, 1)
 	data.addData(&s3, 2)
@@ -90,8 +67,9 @@ func TestParseText(t *testing.T) {
 	if err != nil {
 		t.Log(err)
 	}
-	ss.ParseText(finditer, func(s, e, l int) {
+	ss.ParseText(finditer, func(s, e, l int) bool {
 		t.Log("find ", s, e, l, findstr[s:e])
+		return false
 	})
 
 }
