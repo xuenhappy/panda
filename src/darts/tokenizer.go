@@ -33,3 +33,24 @@ func BasiSplitStr(str *string, piceEng bool) []*Atom {
 	//TODO(xuen): a pice eng
 	return result
 }
+
+var segment Segment
+
+//init the segment
+func init() {
+
+}
+
+//Split split the string and tag it
+func Split(content *string, maxMode bool, tagUse bool) []Pair {
+	atomlist := BasiSplitStr(content, false)
+	wlist := segment.SmartCut(atomlist, maxMode)
+	if wlist != nil {
+		result := make([]Pair, len(wlist))
+		for i, cell := range wlist {
+			result[i] = Pair{K: cell.Word.Image, V: cell.GetTypes()}
+		}
+		return result
+	}
+	return nil
+}

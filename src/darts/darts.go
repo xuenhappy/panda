@@ -51,6 +51,18 @@ func (cell *WCell) AddTypes(types mapset.Set) {
 	cell.Word.AddTypes(types)
 }
 
+func (cell *WCell) GetTypes() []string {
+	if cell.Word.Tags == nil {
+		return nil
+	}
+	tags := cell.Word.Tags.ToSlice()
+	stags := make([]string, len(tags))
+	for i, t := range tags {
+		stags[i] = t.(string)
+	}
+	return stags
+}
+
 //NewWcell create a WCell
 func NewWcell(atom *Atom, s, e int) *WCell {
 	cell := new(WCell)
