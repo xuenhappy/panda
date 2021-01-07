@@ -9,7 +9,7 @@ import (
 type Atom struct {
 	Image   string     //image of the atom
 	St, End int        // [start,end) of this atom in ori string
-	Tags    mapset.Set // type is
+	Tags    mapset.Set // type is set(string)
 }
 
 //NewAtom crate the atom
@@ -19,6 +19,23 @@ func NewAtom(str *string, start, end int) *Atom {
 	atom.St = start
 	atom.End = end
 	return atom
+}
+
+func (atom *Atom) AddType(t string) {
+	if atom.Tags == nil {
+		atom.Tags = mapset.NewSet()
+	}
+	atom.Tags.Add(t)
+}
+
+func (atom *Atom) AddTypes(types mapset.Set) {
+	if types == nil {
+		return
+	}
+	if atom.Tags == nil {
+		atom.Tags = mapset.NewSet()
+	}
+	atom.Tags = atom.Tags.Union(types)
 }
 
 //WCell is the split token parttern
@@ -31,13 +48,7 @@ type WCell struct {
 
 //AddTypes add a give types
 func (cell *WCell) AddTypes(types mapset.Set) {
-	if types == nil {
-		return
-	}
-	if cell.Word.Tags == nil {
-		cell.Word.Tags = mapset.NewSet()
-	}
-	cell.Word.Tags = cell.Word.Tags.Union(types)
+	cell.Word.AddTypes(types)
 }
 
 //NewWcell create a WCell

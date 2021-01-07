@@ -121,14 +121,15 @@ func CharType(chr rune) string {
 }
 
 //CharSplit split the strs use words
-func CharSplit(strs *string) []Pair {
-	result := make([]Pair, 0, len(*strs))
+func CharSplit(strs *string, accept func(string, string, int, int)) {
 	var charBuffer strings.Builder
 	var bufType string
 	uStrs := []rune(*strs)
-	for _, ch := range uStrs {
+	bufstart := 0
+	for idx, ch := range uStrs {
 		ctype := CharType(ch)
 		if strings.Compare(ctype, bufType) != 0 {
+			//blow is special
 			if ctype == "<EMPTY>" && bufType == "<POS>" {
 				bufType = "<POS>"
 				charBuffer.WriteRune(ch)
@@ -139,23 +140,24 @@ func CharSplit(strs *string) []Pair {
 				charBuffer.WriteRune(ch)
 				continue
 			}
+			//start a new
 			if charBuffer.Len() > 0 {
-				result = append(result, Pair{charBuffer.String(), bufType})
+				accept(charBuffer.String(), bufType, bufstart, idx)
 			}
+			bufstart = idx
 			charBuffer.Reset()
 		}
 		bufType = ctype
 		if strings.Compare(bufType, "<CJK>") == 0 {
-			result = append(result, Pair{string(ch), bufType})
+			accept(string(ch), bufType, idx, idx+1)
 			charBuffer.Reset()
 			continue
 		}
 		charBuffer.WriteRune(ch)
 	}
 	if charBuffer.Len() > 0 {
-		result = append(result, Pair{charBuffer.String(), bufType})
+		accept(charBuffer.String(), bufType, bufstart, len(uStrs))
 	}
-	return result
 }
 
 //StrWLen restun the string word Len
