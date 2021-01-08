@@ -349,12 +349,11 @@ type Segment struct {
 }
 
 //NewSegment make a new segment
-func NewSegment(r CellRecognizer, q CellQuantizer) *Segment {
-	if r == nil || q == nil {
+func NewSegment(q CellQuantizer) *Segment {
+	if q == nil {
 		return nil
 	}
 	s := new(Segment)
-	s.cellRecognizers = append(s.cellRecognizers, r)
 	s.quantizer = q
 	return s
 }

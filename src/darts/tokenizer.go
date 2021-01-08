@@ -30,7 +30,21 @@ func BasiSplitStr(str *string, piceEng bool) []*Atom {
 		})
 		return result
 	}
-	//TODO(xuen): a pice eng
+	CharSplit(str, func(img, stype string, s, e int) {
+		if stype == "<ENG>" {
+			pices := SubEngWord(img)
+			for _, w := range pices {
+				atom := NewAtom(&w, s, e)
+				atom.AddType(stype)
+				result = append(result, atom)
+			}
+
+		} else {
+			atom := NewAtom(&img, s, e)
+			atom.AddType(stype)
+			result = append(result, atom)
+		}
+	})
 	return result
 }
 
