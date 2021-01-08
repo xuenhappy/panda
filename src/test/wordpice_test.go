@@ -12,3 +12,11 @@ func TestWordPices(t *testing.T) {
 	t.Log("---------------------")
 	t.Log(s)
 }
+
+func TestBasicSplit(t *testing.T) {
+	ori := "你好啊 helloword 测试"
+	s := darts.BasiSplitStr(&ori, true)
+	t.Log(ori)
+	t.Log("---------------------")
+	t.Log(s)
+}

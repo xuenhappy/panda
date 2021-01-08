@@ -13,23 +13,19 @@ package darts
  */
 
 import (
-	"bytes"
 	"container/list"
 	"encoding/gob"
+	"io"
 	"sort"
 
 	"github.com/emirpasic/gods/maps/treemap"
 )
 
 //StringIter is Used for parer input
-type StringIter interface {
-	IterStr(func(str *string, postion int) bool)
-}
+type StringIter func(func(str *string, postion int) bool)
 
 //StrLabelIter is a input
-type StrLabelIter interface {
-	IterPair(func(strlist StringIter, label int) bool)
-}
+type StrLabelIter func(func(strlist StringIter, label int) bool)
 
 //Trie is a double array trie
 type Trie struct {
@@ -41,13 +37,13 @@ type Trie struct {
 }
 
 //WriteToBytes is write the trie to bytes
-func (t *Trie) WriteToBytes(buf *bytes.Buffer) error {
-	return gob.NewEncoder(buf).Encode(t)
+func (t *Trie) WriteToBytes(writer io.Writer) error {
+	return gob.NewEncoder(writer).Encode(t)
 }
 
 //ReadFromBytes read data
-func (t *Trie) ReadFromBytes(buf *bytes.Buffer) error {
-	return gob.NewDecoder(buf).Decode(t)
+func (t *Trie) ReadFromBytes(reader io.Reader) error {
+	return gob.NewDecoder(reader).Decode(t)
 }
 
 func newTrie() *Trie {
@@ -99,7 +95,7 @@ func (t *Trie) getstate(currentState int, character int) int {
 func (t *Trie) ParseText(text StringIter, hit func(int, int, int) bool) {
 	currentState, indexBufferPos := 0, 0
 	indexBufer := make([]int, t.MaxLen)
-	text.IterStr(func(seq *string, position int) bool {
+	text(func(seq *string, position int) bool {
 		indexBufer[indexBufferPos%t.MaxLen] = position
 		indexBufferPos++
 		currentState = t.getstate(currentState, t.getcode(seq))
@@ -269,11 +265,11 @@ func (b *Builder) constructFailureStates() {
 
 func (b *Builder) addAllKeyword(kvs StrLabelIter) int {
 	maxCode, index, t := 0, -1, b.trie
-	kvs.IterPair(func(k StringIter, v int) bool {
+	kvs(func(k StringIter, v int) bool {
 		index++
 		lens := 0
 		currentState := b.rootState
-		k.IterStr(func(s *string, _ int) bool {
+		k(func(s *string, _ int) bool {
 			lens++
 			code := b.trie.getcode(s)
 			t.CodeMap[*s] = code
@@ -421,8 +417,8 @@ func (b *Builder) build(kvs StrLabelIter) {
 	b.zipWeight()
 }
 
-//Compile the data
-func Compile(kvs StrLabelIter) *Trie {
+//CompileTrie the data
+func CompileTrie(kvs StrLabelIter) *Trie {
 	var builder Builder
 	builder.rootState = newState(0)
 	builder.trie = newTrie()

@@ -26,6 +26,7 @@ type wTable struct {
 func (t *wTable) loadUntoken(path string) {
 	spaceRe, _ := regexp.Compile(`\s+`)
 	err := utils.ReadLine(path, func(line string) bool {
+		line = strings.TrimSpace(line)
 		lines := spaceRe.Split(line, 2)
 		if len(lines) == 2 {
 			num, _ := strconv.Atoi(lines[1])
@@ -41,29 +42,30 @@ func (t *wTable) loadUntoken(path string) {
 func (t *wTable) loadToken(path string) {
 	spaceRe, _ := regexp.Compile(`\s+`)
 	err := utils.ReadLine(path, func(line string) bool {
+		line = strings.TrimSpace(line)
 		lines := spaceRe.Split(line, 3)
-		if len(lines) == 3 {
-			num, _ := strconv.Atoi(lines[2])
-			//add token pre num
-			frq, ok := t.tokeMap[lines[0]]
-			if !ok {
-				frq = new(fReq)
-				frq.next = make(map[string]int)
-				t.tokeMap[lines[0]] = frq
-			}
-			freq1, _ := frq.next[lines[1]]
-			frq.next[lines[1]] = num + freq1
-			frq.sum += num
-			//add token next num
-			frq, ok = t.tokeMap[lines[1]]
-			if !ok {
-				frq = new(fReq)
-				frq.next = make(map[string]int)
-				t.tokeMap[lines[1]] = frq
-			}
-			frq.sum += num
-
+		if len(lines) != 3 {
+			return false
 		}
+		num, _ := strconv.Atoi(lines[2])
+		//add token pre num
+		frq, ok := t.tokeMap[lines[0]]
+		if !ok {
+			frq = new(fReq)
+			frq.next = make(map[string]int)
+			t.tokeMap[lines[0]] = frq
+		}
+		freq1, _ := frq.next[lines[1]]
+		frq.next[lines[1]] = num + freq1
+		frq.sum += num
+		//add token next num
+		frq, ok = t.tokeMap[lines[1]]
+		if !ok {
+			frq = new(fReq)
+			frq.next = make(map[string]int)
+			t.tokeMap[lines[1]] = frq
+		}
+		frq.sum += num
 		return false
 	})
 	if err != nil {
@@ -151,7 +153,7 @@ func init() {
 	table.untokenMap = make(map[string]int)
 	table.minFreq = math.MaxInt32
 	epath, _ := utils.GetExePath()
-	//epath = "/Users/xuen/Documents/workspace/panda"
+	epath = "/Users/xuen/Documents/workspace/panda"
 	fpath := path.Join(epath, "data/ueng.txt")
 	table.loadUntoken(fpath)
 	fPpath := path.Join(epath, "data/uepice.txt")
@@ -162,6 +164,7 @@ func init() {
 
 //SubEngWord split the english words
 func SubEngWord(engw string) []string {
+	engw = strings.ToLower(engw) //only support lower letter [a-z]+
 	_, exists := table.untokenMap[engw]
 	if exists {
 		return []string{engw}
