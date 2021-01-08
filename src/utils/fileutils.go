@@ -12,14 +12,16 @@
 package utils
 
 import (
+	"bufio"
 	"errors"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 )
 
-// get exe file path
+//GetExePath  get exe file path
 func GetExePath() (string, error) {
 	file, err := exec.LookPath(os.Args[0])
 	if err != nil {
@@ -34,7 +36,30 @@ func GetExePath() (string, error) {
 		i = strings.LastIndex(path, "\\")
 	}
 	if i < 0 {
-		return "", errors.New(`error: Can't find "/" or "\".`)
+		return "", errors.New("error: Can't find '/' or '.'")
 	}
 	return string(path[0 : i+1]), nil
+}
+
+//ReadLine read a text file
+func ReadLine(fileName string, handler func(string) bool) error {
+	f, err := os.Open(fileName)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	buf := bufio.NewReader(f)
+	for {
+		line, err := buf.ReadString('\n')
+		line = strings.TrimSpace(line)
+		if handler(line) {
+			return nil
+		}
+		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
+			return err
+		}
+	}
 }

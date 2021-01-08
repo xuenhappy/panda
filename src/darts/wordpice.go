@@ -5,6 +5,8 @@ import (
 	"math"
 	"panda/utils"
 	"path"
+	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -22,11 +24,65 @@ type wTable struct {
 }
 
 func (t *wTable) loadUntoken(path string) {
-
+	spaceRe, _ := regexp.Compile(`\s+`)
+	err := utils.ReadLine(path, func(line string) bool {
+		lines := spaceRe.Split(line, 2)
+		if len(lines) == 2 {
+			num, _ := strconv.Atoi(lines[1])
+			t.untokenMap[lines[0]] = num
+		}
+		return false
+	})
+	if err != nil {
+		fmt.Printf("Open file failed [Err:%s]\n", err.Error())
+	}
 }
 
 func (t *wTable) loadToken(path string) {
+	spaceRe, _ := regexp.Compile(`\s+`)
+	err := utils.ReadLine(path, func(line string) bool {
+		lines := spaceRe.Split(line, 3)
+		if len(lines) == 3 {
+			num, _ := strconv.Atoi(lines[2])
+			//add token pre num
+			frq, ok := t.tokeMap[lines[0]]
+			if !ok {
+				frq = new(fReq)
+				frq.next = make(map[string]int)
+				t.tokeMap[lines[0]] = frq
+			}
+			freq1, _ := frq.next[lines[1]]
+			frq.next[lines[1]] = num + freq1
+			frq.sum += num
+			//add token next num
+			frq, ok = t.tokeMap[lines[1]]
+			if !ok {
+				frq = new(fReq)
+				frq.next = make(map[string]int)
+				t.tokeMap[lines[1]] = frq
+			}
+			frq.sum += num
 
+		}
+		return false
+	})
+	if err != nil {
+		fmt.Printf("Open file failed [Err:%s]\n", err.Error())
+		return
+	}
+	//static
+	for k, v := range t.tokeMap {
+		if len(k) > t.maxCodeLen {
+			t.maxCodeLen = len(k)
+		}
+		if v.sum < t.minFreq {
+			t.minFreq = v.sum
+		}
+		if v.sum > t.sumFreq {
+			t.sumFreq = v.sum
+		}
+		t.sumFreq = t.sumFreq + len(t.tokeMap) + 1
+	}
 }
 
 func (t *wTable) Read(content []*Atom, cmap *CellMap) {
@@ -91,7 +147,11 @@ var splitter *Segment
 
 func init() {
 	table = new(wTable)
+	table.tokeMap = make(map[string]*fReq)
+	table.untokenMap = make(map[string]int)
+	table.minFreq = math.MaxInt32
 	epath, _ := utils.GetExePath()
+	//epath = "/Users/xuen/Documents/workspace/panda"
 	fpath := path.Join(epath, "data/ueng.txt")
 	table.loadUntoken(fpath)
 	fPpath := path.Join(epath, "data/uepice.txt")
@@ -111,7 +171,7 @@ func SubEngWord(engw string) []string {
 	atoms := make([]*Atom, len(words))
 	for i, word := range words {
 		w := string(word)
-		atoms = append(atoms, NewAtom(&w, i, i+1))
+		atoms[i] = NewAtom(&w, i, i+1)
 	}
 	wcellList := splitter.SmartCut(atoms, false)
 	result := make([]string, len(wcellList))

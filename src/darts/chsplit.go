@@ -28,8 +28,8 @@ const emptyFlag = "<EMPTY>"
 
 func loadTableFile() {
 	filepath, _ := utils.GetExePath()
+	//filepath= "/home/enxu/Documents/workspace/panda/"
 	filepath = path.Join(filepath, "data/wordtype.json")
-	//filepath := "/home/enxu/Documents/workspace/panda/data/wordtype.json"
 	filePtr, err := os.Open(filepath)
 	if err != nil {
 		fmt.Printf("Open file failed [Err:%s]\n", err.Error())

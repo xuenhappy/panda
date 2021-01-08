@@ -1,6 +1,8 @@
 package darts
 
 import (
+	"fmt"
+
 	"github.com/deckarep/golang-set"
 	"gonum.org/v1/gonum/mat"
 )
@@ -12,6 +14,11 @@ type Atom struct {
 	Tags    mapset.Set // type is set(string)
 }
 
+//String is add a type to atom
+func (atom *Atom) String() string {
+	return fmt.Sprintf("%s[%d,%d)", atom.Image, atom.St, atom.End)
+}
+
 //NewAtom crate the atom
 func NewAtom(str *string, start, end int) *Atom {
 	atom := new(Atom)
@@ -21,6 +28,7 @@ func NewAtom(str *string, start, end int) *Atom {
 	return atom
 }
 
+//AddType is add a type to atom
 func (atom *Atom) AddType(t string) {
 	if atom.Tags == nil {
 		atom.Tags = mapset.NewSet()
@@ -28,6 +36,7 @@ func (atom *Atom) AddType(t string) {
 	atom.Tags.Add(t)
 }
 
+//AddTypes is add the types
 func (atom *Atom) AddTypes(types mapset.Set) {
 	if types == nil {
 		return
@@ -51,6 +60,7 @@ func (cell *WCell) AddTypes(types mapset.Set) {
 	cell.Word.AddTypes(types)
 }
 
+//GetTypes give the type to arry
 func (cell *WCell) GetTypes() []string {
 	if cell.Word.Tags == nil {
 		return nil
@@ -117,7 +127,7 @@ func (cmap *CellMap) IterRow(cur *Cursor, row int, dfunc func(*Cursor)) {
 	if cur == nil {
 		cur = cmap.Head
 	}
-	if row <= 0 {
+	if row < 0 {
 		for cur.lack != nil {
 			dfunc(cur.lack)
 			cur = cur.lack
@@ -260,6 +270,7 @@ func splitContent(cmap *CellMap, quantizer CellQuantizer, context []*Atom) []*WC
 			}
 			graph[pre.idx] = tmp
 		})
+
 		return graph
 	}
 

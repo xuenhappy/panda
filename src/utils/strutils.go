@@ -91,8 +91,8 @@ func loadUnVisual() {
 
 func loadFileMap() {
 	filepath, _ := GetExePath()
+	//filepath= "/home/enxu/Documents/workspace/panda/"
 	filepath = path.Join(filepath, "data/confusables.json")
-	//filepath := "/home/enxu/Documents/workspace/panda/data/confusables.json"
 	filePtr, err := os.Open(filepath)
 	if err != nil {
 		fmt.Printf("Open file failed [Err:%s]\n", err.Error())
