@@ -89,12 +89,12 @@ func newCur(value *WCell, pre, next *Cursor) *Cursor {
 
 //CellMap used
 type CellMap struct {
-	head               *Cursor //this cellMap size
+	Head               *Cursor //this cellMap size
 	rows, colums, size int     // this cellmap countor
 }
 
 func (cmap *CellMap) indexMap() {
-	node := cmap.head
+	node := cmap.Head
 	index := -1
 	for node.lack != nil {
 		node = node.lack
@@ -105,17 +105,17 @@ func (cmap *CellMap) indexMap() {
 
 func newCellMap() *CellMap {
 	cmap := new(CellMap)
-	cmap.head = new(Cursor)
-	cmap.head.val = new(WCell)
-	cmap.head.val.St = -1
-	cmap.head.val.Et = 0
+	cmap.Head = new(Cursor)
+	cmap.Head.val = new(WCell)
+	cmap.Head.val.St = -1
+	cmap.Head.val.Et = 0
 	return cmap
 }
 
 //IterRow is iter the cellmap ,if row<0 tits iter all
 func (cmap *CellMap) IterRow(cur *Cursor, row int, dfunc func(*Cursor)) {
 	if cur == nil {
-		cur = cmap.head
+		cur = cmap.Head
 	}
 	if row <= 0 {
 		for cur.lack != nil {
@@ -182,7 +182,7 @@ func (cmap *CellMap) AddPre(cur *Cursor, cell *WCell) *Cursor {
 	if cell.Et > cmap.colums {
 		cmap.colums = cell.Et
 	}
-	for cur.pre != cmap.head {
+	for cur.pre != cmap.Head {
 		n := cur.pre
 		if n.val.St > cell.St {
 			cur = n
@@ -204,7 +204,7 @@ func (cmap *CellMap) AddPre(cur *Cursor, cell *WCell) *Cursor {
 		n.lack = m
 		return m
 	}
-	cur.pre = newCur(cell, cmap.head, cur)
+	cur.pre = newCur(cell, cmap.Head, cur)
 	cmap.size++
 	return cur.pre
 }
@@ -212,7 +212,7 @@ func (cmap *CellMap) AddPre(cur *Cursor, cell *WCell) *Cursor {
 //AddCell add a cell to a cur
 func (cmap *CellMap) AddCell(cell *WCell, cur *Cursor) *Cursor {
 	if cur == nil {
-		return cmap.AddNext(cmap.head, cell)
+		return cmap.AddNext(cmap.Head, cell)
 	}
 	if cur.val.St < cell.St {
 		return cmap.AddNext(cur, cell)
@@ -367,7 +367,7 @@ func (seg *Segment) AddCellRecognizer(r CellRecognizer) {
 
 func (seg *Segment) buildMap(atomList []*Atom) *CellMap {
 	cmap := newCellMap()
-	cur := cmap.head
+	cur := cmap.Head
 	for i, atom := range atomList {
 		cur = cmap.AddNext(cur, NewWcell(atom, i, i+1))
 	}
