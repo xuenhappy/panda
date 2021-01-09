@@ -151,12 +151,18 @@ func (fIter *FilePairIter) IterPairFile(dfunc func(StringIter, int) bool) {
 	splitRe, _ := regexp.Compile(`\s*,\s*`)
 	err := utils.ReadLine(fIter.filepath, func(line string) bool {
 		line = strings.TrimSpace(line)
+		if len(line) < 1 {
+			return false
+		}
 		lines := splitRe.Split(line, 2)
 		if len(lines) != 2 {
 			fmt.Println("bad line support", line)
 			return false
 		}
 		atom := BasiSplitStr(&lines[1], false)
+		if len(atom) < 2 {
+			return false
+		}
 		iter := NewAtomStrIter(atom, fIter.skipEmpty, fIter.skipPos)
 		label, ok := fIter.label[lines[0]]
 		if !ok {
@@ -175,17 +181,22 @@ func (fIter *FilePairIter) IterPairFile(dfunc func(StringIter, int) bool) {
 func CompileTxtMatchDict(txtPath, outpath string) error {
 	fp, err := os.Create(outpath)
 	if err != nil {
-		fmt.Printf("Open file failed [Err:%s]\n", err.Error())
 		return err
 	}
-	defer fp.Close()
-	w := gzip.NewWriter(bufio.NewWriter(fp))
+	buf := bufio.NewWriter(fp)
+	w := gzip.NewWriter(buf)
+	defer func() {
+		w.Close()
+		buf.Flush()
+		fp.Close()
+	}()
 	fIter := NewFilePairIter(txtPath, true, false)
 	trie := CompileTrie(fIter.IterPairFile)
-	trie.WriteToBytes(w)
-	gob.NewEncoder(w).Encode(fIter.label)
-	defer w.Close()
-	return err
+	err = trie.WriteToBytes(w)
+	if err != nil {
+		return err
+	}
+	return gob.NewEncoder(w).Encode(fIter.label)
 }
 
 //LoadTrieDict load trie data
@@ -201,18 +212,20 @@ func LoadTrieDict(dataPath string) (*Trie, map[int]string, error) {
 	}
 	defer w.Close()
 	trie := new(Trie)
-	trie.ReadFromBytes(w)
-	var label interface{}
-	err2 := gob.NewDecoder(w).Decode(label)
+	err3 := trie.ReadFromBytes(w)
+	if err3 != nil {
+		return nil, nil, err3
+	}
+	var label map[string]int
+	err2 := gob.NewDecoder(w).Decode(&label)
 	if err2 != nil {
-		fmt.Printf("Open file failed [Err:%s]\n", err2.Error())
 		return nil, nil, err2
 	}
 	rlabel := make(map[int]string)
-	for k, v := range label.(map[string]int) {
+	for k, v := range label {
 		rlabel[v] = k
 	}
-	return trie, rlabel, err
+	return trie, rlabel, nil
 }
 
 //DictCellRecognizer is a dict regconize
