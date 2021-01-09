@@ -5,8 +5,10 @@ import (
 	"compress/gzip"
 	"encoding/gob"
 	"fmt"
+	"github.com/deckarep/golang-set"
 	"os"
 	"panda/utils"
+	"path"
 	"regexp"
 	"strings"
 )
@@ -68,18 +70,32 @@ func BasiSplitStr(str *string, piceEng bool) []*Atom {
 	return result
 }
 
-var segment Segment
-
-//init the segment
-func init() {
-
-}
-
 //AtomStrIter iter atom
 type AtomStrIter struct {
 	atoms     []*Atom
 	skipEmpty bool
 	skipPos   bool
+}
+
+//SubAtomList Sub a atonlist
+func SubAtomList(atoms []*Atom, start, end int) *Atom {
+	var buf strings.Builder
+	tags := mapset.NewSet()
+	for i := start; i < end; i++ {
+		buf.WriteString(atoms[i].Image)
+		if atoms[i].Tags != nil {
+			tags = tags.Intersect(atoms[i].Tags)
+		}
+	}
+	if buf.Len() > 0 {
+		str := buf.String()
+		atom := NewAtom(&str, atoms[start].St, atoms[end-1].End)
+		if tags.Cardinality() > 0 {
+			atom.Tags = tags
+		}
+		return atom
+	}
+	return nil
 }
 
 //NewAtomStrIter make a AtomStrIter
@@ -173,17 +189,15 @@ func CompileTxtMatchDict(txtPath, outpath string) error {
 }
 
 //LoadTrieDict load trie data
-func LoadTrieDict(dataPath string) (*Trie, map[int]string) {
+func LoadTrieDict(dataPath string) (*Trie, map[int]string, error) {
 	fp, err := os.Open(dataPath)
 	if err != nil {
-		fmt.Printf("Open file failed [Err:%s]\n", err.Error())
-		return nil, nil
+		return nil, nil, err
 	}
 	defer fp.Close()
 	w, err1 := gzip.NewReader(bufio.NewReader(fp))
 	if err1 != nil {
-		fmt.Printf("Open file failed [Err:%s]\n", err1.Error())
-		return nil, nil
+		return nil, nil, err1
 	}
 	defer w.Close()
 	trie := new(Trie)
@@ -192,13 +206,60 @@ func LoadTrieDict(dataPath string) (*Trie, map[int]string) {
 	err2 := gob.NewDecoder(w).Decode(label)
 	if err2 != nil {
 		fmt.Printf("Open file failed [Err:%s]\n", err2.Error())
-		return nil, nil
+		return nil, nil, err2
 	}
 	rlabel := make(map[int]string)
 	for k, v := range label.(map[string]int) {
 		rlabel[v] = k
 	}
-	return trie, rlabel
+	return trie, rlabel, err
+}
+
+//DictCellRecognizer is a dict regconize
+type DictCellRecognizer struct {
+	label map[int]string
+	trie  *Trie
+}
+
+//NewDictCellRecognizer create a dict
+func NewDictCellRecognizer(fpath string) (*DictCellRecognizer, error) {
+	dict := new(DictCellRecognizer)
+	var err error = nil
+	dict.trie, dict.label, err = LoadTrieDict(fpath)
+	if err != nil {
+		return nil, err
+	}
+	return dict, nil
+}
+
+//Read is read a cell
+func (dict *DictCellRecognizer) Read(content []*Atom, cmap *CellMap) {
+	cur := cmap.Head
+	dict.trie.ParseText(NewAtomStrIter(content, true, false).IterStr, func(start, end, label int) bool {
+		cell := NewWcell(SubAtomList(content, start, end), start, end)
+		l, ok := dict.label[label]
+		if ok {
+			cell.Word.AddType(l)
+		}
+		cur = cmap.AddCell(cell, cur)
+		return false
+	})
+}
+
+var segment *Segment
+
+//init the segment
+func init() {
+	segment = NewSegment(nil)
+	filepath, _ := utils.GetExePath()
+	//filepath= "/home/enxu/Documents/workspace/panda/"
+	filepath = path.Join(filepath, "data/panda.dict")
+	dict, err := NewDictCellRecognizer(filepath)
+	if err != nil {
+		fmt.Printf("Open file failed [Err:%s]\n", err.Error())
+		return
+	}
+	segment.AddCellRecognizer(dict)
 }
 
 //Split split the string and tag it
