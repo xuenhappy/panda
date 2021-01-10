@@ -29,16 +29,16 @@ type StrPairList struct {
 	datas []darts.Pair
 }
 
-func (list *StrPairList) IterPair(do func(darts.StringIter, int) bool) {
+func (list *StrPairList) IterPair(do func(darts.StringIter, []int) bool) {
 	for _, pair := range list.datas {
-		strlist, label := pair.K.(*CharIter), pair.V.(int)
-		if do(strlist.IterStr, label) {
+		strlist, labels := pair.K.(*CharIter), pair.V.([]int)
+		if do(strlist.IterStr, labels) {
 			break
 		}
 	}
 }
 
-func (list *StrPairList) addData(v *string, l int) {
+func (list *StrPairList) addData(v *string, l []int) {
 	list.datas = append(list.datas, darts.Pair{K: chrs(v), V: l})
 }
 
@@ -49,9 +49,9 @@ func TestParseText(t *testing.T) {
 	t.Log(s2)
 	t.Log(s3)
 	data := StrPairList{}
-	data.addData(&s1, 0)
-	data.addData(&s2, 1)
-	data.addData(&s3, 2)
+	data.addData(&s1, []int{0})
+	data.addData(&s2, []int{1})
+	data.addData(&s3, []int{2})
 	trie := darts.CompileTrie(data.IterPair)
 	findstr := "dcfabcdef"
 	finditer := chrs(&findstr)
@@ -67,7 +67,7 @@ func TestParseText(t *testing.T) {
 	if err != nil {
 		t.Log(err)
 	}
-	ss.ParseText(finditer.IterStr, func(s, e, l int) bool {
+	ss.ParseText(finditer.IterStr, func(s, e int, l []int) bool {
 		t.Log("find ", s, e, l, findstr[s:e])
 		return false
 	})

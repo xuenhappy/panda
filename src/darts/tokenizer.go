@@ -87,10 +87,11 @@ func NewFilePairIter(path string, skipEmpty, skipPos bool) *FilePairIter {
 }
 
 //IterPairFile iter files
-func (fIter *FilePairIter) IterPairFile(dfunc func(StringIter, int) bool) {
+func (fIter *FilePairIter) IterPairFile(dfunc func(StringIter, []int) bool) {
 	lineNum := 0
 	labels := make(map[string]int)
 	splitRe, _ := regexp.Compile(`\s*,\s*`)
+	TagRe, _ := regexp.Compile(`\s*,\s*`)
 	err := utils.ReadLine(fIter.filepath, func(line string) bool {
 		lineNum++
 		line = strings.TrimSpace(line)
@@ -107,12 +108,17 @@ func (fIter *FilePairIter) IterPairFile(dfunc func(StringIter, int) bool) {
 			return false
 		}
 		iter := NewAtomList(atom, &lines[1])
-		label, ok := labels[lines[0]]
-		if !ok {
-			label = len(labels) + 1
-			labels[lines[0]] = label
+		strTags := TagRe.Split(lines[0], -1)
+		itags := make([]int, len(strTags))
+		for i, tag := range strTags {
+			label, ok := labels[tag]
+			if !ok {
+				label = len(labels) + 1
+				labels[tag] = label
+			}
+			itags[i] = label
 		}
-		dfunc(iter.StrIterFuc(true, false), label)
+		dfunc(iter.StrIterFuc(true, false), itags)
 		return false
 	})
 	fIter.label = labels
@@ -190,11 +196,13 @@ func NewDictCellRecognizer(fpath string) (*DictCellRecognizer, error) {
 //Read is read a cell
 func (dict *DictCellRecognizer) Read(content *AtomList, cmap *CellMap) {
 	cur := cmap.Head
-	dict.trie.ParseText(content.StrIterFuc(true, false), func(start, end, label int) bool {
+	dict.trie.ParseText(content.StrIterFuc(true, false), func(start, end int, labels []int) bool {
 		cell := NewWcell(content.SubAtomList(start, end), start, end)
-		l, ok := dict.label[label]
-		if ok {
-			cell.Word.AddType(l)
+		for _, label := range labels {
+			l, ok := dict.label[label]
+			if ok {
+				cell.Word.AddType(l)
+			}
 		}
 		cur = cmap.AddCell(cell, cur)
 		return false

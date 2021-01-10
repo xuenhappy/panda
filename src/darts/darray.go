@@ -25,12 +25,12 @@ import (
 type StringIter func(func(str *string, postion int) bool)
 
 //StrLabelIter is a input
-type StrLabelIter func(func(strlist StringIter, label int) bool)
+type StrLabelIter func(func(strlist StringIter, labels []int) bool)
 
 //Trie is a double array trie
 type Trie struct {
 	Check, Base, Fail, L []int
-	V                    []int
+	V                    [][]int
 	OutPut               [][]int
 	MaxLen               int
 	CodeMap              map[string]int
@@ -92,7 +92,7 @@ func (t *Trie) getstate(currentState int, character int) int {
 }
 
 //ParseText parse a text list hit ( [start,end),tagidx)
-func (t *Trie) ParseText(text StringIter, hit func(int, int, int) bool) {
+func (t *Trie) ParseText(text StringIter, hit func(int, int, []int) bool) {
 	currentState, indexBufferPos := 0, 0
 	indexBufer := make([]int, t.MaxLen)
 	text(func(seq *string, position int) bool {
@@ -265,7 +265,7 @@ func (b *Builder) constructFailureStates() {
 
 func (b *Builder) addAllKeyword(kvs StrLabelIter) int {
 	maxCode, index, t := 0, -1, b.trie
-	kvs(func(k StringIter, v int) bool {
+	kvs(func(k StringIter, v []int) bool {
 		index++
 		lens := 0
 		currentState := b.rootState

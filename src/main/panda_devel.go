@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"panda/darts"
+	"strings"
 )
 
 func main1() {
@@ -22,10 +23,14 @@ func main() {
 	}
 	str := "南京市长江大桥一代新人换旧人通车了"
 	atoms := darts.NewAtomList(darts.BasiSplitStr(&str, false), &str)
-	trie.ParseText(atoms.StrIterFuc(true, false), func(start, end, lab int) bool {
+	trie.ParseText(atoms.StrIterFuc(true, false), func(start, end int, labels []int) bool {
 		atom := atoms.SubAtomList(start, end)
-		l, _ := label[lab]
-		fmt.Println(atom, l)
+		var tagsBuilder strings.Builder
+		for _, lab := range labels {
+			l, _ := label[lab]
+			tagsBuilder.WriteString(l)
+		}
+		fmt.Println(atom, tagsBuilder.String())
 		return false
 	})
 
