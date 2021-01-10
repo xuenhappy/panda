@@ -91,7 +91,7 @@ func (fIter *FilePairIter) IterPairFile(dfunc func(StringIter, []int) bool) {
 	lineNum := 0
 	labels := make(map[string]int)
 	splitRe, _ := regexp.Compile(`\s*,\s*`)
-	TagRe, _ := regexp.Compile(`\s*,\s*`)
+	TagRe, _ := regexp.Compile(`\s*\|\s*`)
 	err := utils.ReadLine(fIter.filepath, func(line string) bool {
 		lineNum++
 		line = strings.TrimSpace(line)
