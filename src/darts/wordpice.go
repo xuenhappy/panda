@@ -87,25 +87,25 @@ func (t *wTable) loadToken(path string) {
 	}
 }
 
-func (t *wTable) Read(content []*Atom, cmap *CellMap) {
+func (t *wTable) Read(content *AtomList, cmap *CellMap) {
 	cur := cmap.Head
 	lens := t.maxCodeLen
-	if lens > len(content) {
-		lens = len(content)
+	if lens > len(content.List) {
+		lens = len(content.List)
 	}
 	var builder strings.Builder
-	for i := 0; i < len(content)-1; i++ {
+	for i := 0; i < len(content.List)-1; i++ {
 		builder.Reset()
-		builder.WriteString(content[i].Image)
+		builder.WriteString(content.List[i].Image)
 		for j := 2; j <= lens; j++ {
-			if i+j > len(content) {
+			if i+j > len(content.List) {
 				break
 			}
-			builder.WriteString(content[i+j-1].Image)
+			builder.WriteString(content.List[i+j-1].Image)
 			img := builder.String()
 			_, ok := t.tokeMap[img]
 			if ok {
-				atom := NewAtom(&img, content[i].St, content[i+j-1].End)
+				atom := NewAtom(&img, content.List[i].St, content.List[i+j-1].End)
 				cur = cmap.AddNext(cur, NewWcell(atom, i, i+j))
 			}
 		}
@@ -113,7 +113,7 @@ func (t *wTable) Read(content []*Atom, cmap *CellMap) {
 
 }
 
-func (t *wTable) Embed(context []*Atom, cmap *CellMap) {
+func (t *wTable) Embed(context *AtomList, cmap *CellMap) {
 	//do nothing
 }
 
@@ -176,7 +176,7 @@ func SubEngWord(engw string) []string {
 		w := string(word)
 		atoms[i] = NewAtom(&w, i, i+1)
 	}
-	wcellList := splitter.SmartCut(atoms, false)
+	wcellList := splitter.SmartCut(NewAtomList(atoms, &words), false)
 	result := make([]string, len(wcellList))
 	for i, cell := range wcellList {
 		if i < len(wcellList)-1 {

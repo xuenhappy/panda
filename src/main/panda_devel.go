@@ -21,9 +21,9 @@ func main() {
 		return
 	}
 	str := "南京市长江大桥一代新人换旧人通车了"
-	atoms := darts.BasiSplitStr(&str, false)
-	trie.ParseText(darts.NewAtomStrIter(atoms, true, false).IterStr, func(start, end, lab int) bool {
-		atom := darts.SubAtomList(atoms, start, end)
+	atoms := darts.NewAtomList(darts.BasiSplitStr(&str, false), &str)
+	trie.ParseText(atoms.StrIterFuc(true, false), func(start, end, lab int) bool {
+		atom := atoms.SubAtomList(start, end)
 		l, _ := label[lab]
 		fmt.Println(atom, l)
 		return false

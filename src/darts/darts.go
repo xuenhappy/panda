@@ -2,6 +2,7 @@ package darts
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/deckarep/golang-set"
 	"gonum.org/v1/gonum/mat"
@@ -45,6 +46,65 @@ func (atom *Atom) AddTypes(types mapset.Set) {
 		atom.Tags = mapset.NewSet()
 	}
 	atom.Tags = atom.Tags.Union(types)
+}
+
+//AtomList is aarray of atoms
+type AtomList struct {
+	Str  *string //ori image
+	List []*Atom //lsit data
+}
+
+//SubAtomList Sub a atonlist
+func (alist *AtomList) SubAtomList(start, end int) *Atom {
+	var buf strings.Builder
+	tags := mapset.NewSet()
+	for i := start; i < end; i++ {
+		buf.WriteString(alist.List[i].Image)
+		if alist.List[i].Tags != nil {
+			tags = tags.Intersect(alist.List[i].Tags)
+		}
+	}
+	if buf.Len() > 0 {
+		str := buf.String()
+		atom := NewAtom(&str, alist.List[start].St, alist.List[end-1].End)
+		if tags.Cardinality() > 0 {
+			atom.Tags = tags
+		}
+		return atom
+	}
+	return nil
+}
+
+//NewAtomList make a atom List
+func NewAtomList(atoms []*Atom, img *string) *AtomList {
+	return &AtomList{Str: img, List: atoms}
+}
+
+//StrIterFuc iter the atom list
+func (alist *AtomList) StrIterFuc(skipEmpty, skipPos bool) StringIter {
+	if !(skipEmpty || skipPos) {
+		return func(dfunc func(*string, int) bool) {
+			for i, a := range alist.List {
+				if dfunc(&a.Image, i) {
+					break
+				}
+			}
+		}
+	}
+	return func(dfunc func(*string, int) bool) {
+		se, sp := skipEmpty, skipPos
+		for i, a := range alist.List {
+			if se && a.Tags != nil && a.Tags.Contains("<EMPTY>") {
+				continue
+			}
+			if sp && a.Tags != nil && a.Tags.Contains("<POS>") {
+				continue
+			}
+			if dfunc(&a.Image, i) {
+				break
+			}
+		}
+	}
 }
 
 //WCell is the split token parttern
@@ -236,18 +296,18 @@ func (cmap *CellMap) AddCell(cell *WCell, cur *Cursor) *Cursor {
 //CellRecognizer is code
 type CellRecognizer interface {
 	//recognizer all Wcell possable in the atomlist
-	Read(content []*Atom, cmap *CellMap)
+	Read(content *AtomList, cmap *CellMap)
 }
 
 //CellQuantizer interface of a prepre
 type CellQuantizer interface {
 	//set the cmap val data embeding
-	Embed(context []*Atom, cmap *CellMap)
+	Embed(context *AtomList, cmap *CellMap)
 	//distance of the pre and next cell
 	Distance(pre *WCell, next *WCell) float32
 }
 
-func splitContent(cmap *CellMap, quantizer CellQuantizer, context []*Atom) []*WCell {
+func splitContent(cmap *CellMap, quantizer CellQuantizer, context *AtomList) []*WCell {
 	buildGraph := func() map[int][][2]float32 {
 		cmap.indexMap()
 		quantizer.Embed(context, cmap)
@@ -376,10 +436,10 @@ func (seg *Segment) AddCellRecognizer(r CellRecognizer) {
 	}
 }
 
-func (seg *Segment) buildMap(atomList []*Atom) *CellMap {
+func (seg *Segment) buildMap(atomList *AtomList) *CellMap {
 	cmap := newCellMap()
 	cur := cmap.Head
-	for i, atom := range atomList {
+	for i, atom := range atomList.List {
 		cur = cmap.AddNext(cur, NewWcell(atom, i, i+1))
 	}
 	for _, recognizer := range seg.cellRecognizers {
@@ -389,13 +449,13 @@ func (seg *Segment) buildMap(atomList []*Atom) *CellMap {
 }
 
 //SmartCut cut a atoml list
-func (seg *Segment) SmartCut(atomList []*Atom, maxMode bool) []*WCell {
-	if len(atomList) < 1 {
+func (seg *Segment) SmartCut(atomList *AtomList, maxMode bool) []*WCell {
+	if len(atomList.List) < 1 {
 		return nil
 	}
-	if len(atomList) == 1 {
+	if len(atomList.List) == 1 {
 		res := make([]*WCell, 1)
-		res[0] = NewWcell(atomList[0], 0, 1)
+		res[0] = NewWcell(atomList.List[0], 0, 1)
 		return res
 	}
 	cmap := seg.buildMap(atomList)

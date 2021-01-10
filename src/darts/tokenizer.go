@@ -5,7 +5,6 @@ import (
 	"compress/gzip"
 	"encoding/gob"
 	"fmt"
-	"github.com/deckarep/golang-set"
 	"os"
 	"panda/utils"
 	"path"
@@ -70,64 +69,6 @@ func BasiSplitStr(str *string, piceEng bool) []*Atom {
 	return result
 }
 
-//AtomStrIter iter atom
-type AtomStrIter struct {
-	atoms     []*Atom
-	skipEmpty bool
-	skipPos   bool
-}
-
-//SubAtomList Sub a atonlist
-func SubAtomList(atoms []*Atom, start, end int) *Atom {
-	var buf strings.Builder
-	tags := mapset.NewSet()
-	for i := start; i < end; i++ {
-		buf.WriteString(atoms[i].Image)
-		if atoms[i].Tags != nil {
-			tags = tags.Intersect(atoms[i].Tags)
-		}
-	}
-	if buf.Len() > 0 {
-		str := buf.String()
-		atom := NewAtom(&str, atoms[start].St, atoms[end-1].End)
-		if tags.Cardinality() > 0 {
-			atom.Tags = tags
-		}
-		return atom
-	}
-	return nil
-}
-
-//NewAtomStrIter make a AtomStrIter
-func NewAtomStrIter(atoms []*Atom, skipEmpty, skipPos bool) *AtomStrIter {
-	return &AtomStrIter{atoms, skipEmpty, skipPos}
-}
-
-//IterStr iter the atom list
-func (alist *AtomStrIter) IterStr(dfunc func(*string, int) bool) {
-	if !(alist.skipEmpty || alist.skipPos) {
-		for i, a := range alist.atoms {
-			if dfunc(&a.Image, i) {
-				break
-			}
-		}
-		return
-	}
-
-	for i, a := range alist.atoms {
-		if alist.skipEmpty && a.Tags != nil && a.Tags.Contains("<EMPTY>") {
-			continue
-		}
-
-		if alist.skipPos && a.Tags != nil && a.Tags.Contains("<POS>") {
-			continue
-		}
-		if dfunc(&a.Image, i) {
-			break
-		}
-	}
-}
-
 //FilePairIter is a input
 type FilePairIter struct {
 	filepath  string
@@ -142,36 +83,39 @@ func NewFilePairIter(path string, skipEmpty, skipPos bool) *FilePairIter {
 	fIter.filepath = path
 	fIter.skipEmpty = skipEmpty
 	fIter.skipPos = skipPos
-	fIter.label = make(map[string]int)
 	return fIter
 }
 
 //IterPairFile iter files
 func (fIter *FilePairIter) IterPairFile(dfunc func(StringIter, int) bool) {
+	lineNum := 0
+	labels := make(map[string]int)
 	splitRe, _ := regexp.Compile(`\s*,\s*`)
 	err := utils.ReadLine(fIter.filepath, func(line string) bool {
+		lineNum++
 		line = strings.TrimSpace(line)
-		if len(line) < 1 {
+		if len(line) < 1 { //empty str
 			return false
 		}
 		lines := splitRe.Split(line, 2)
-		if len(lines) != 2 {
-			fmt.Println("bad line support", line)
+		if len(lines) != 2 { //bad line
+			fmt.Printf("bad line[%d] support [%s]\n", lineNum, line)
 			return false
 		}
 		atom := BasiSplitStr(&lines[1], false)
-		if len(atom) < 2 {
+		if len(atom) < 2 { //single word not used
 			return false
 		}
-		iter := NewAtomStrIter(atom, fIter.skipEmpty, fIter.skipPos)
-		label, ok := fIter.label[lines[0]]
+		iter := NewAtomList(atom, &lines[1])
+		label, ok := labels[lines[0]]
 		if !ok {
-			label = len(fIter.label) + 1
-			fIter.label[lines[0]] = label
+			label = len(labels) + 1
+			labels[lines[0]] = label
 		}
-		dfunc(iter.IterStr, label)
+		dfunc(iter.StrIterFuc(true, false), label)
 		return false
 	})
+	fIter.label = labels
 	if err != nil {
 		fmt.Printf("Open file failed [Err:%s]\n", err.Error())
 	}
@@ -183,13 +127,11 @@ func CompileTxtMatchDict(txtPath, outpath string) error {
 	if err != nil {
 		return err
 	}
+	fp.Close()
 	buf := bufio.NewWriter(fp)
+	defer buf.Flush()
 	w := gzip.NewWriter(buf)
-	defer func() {
-		w.Close()
-		buf.Flush()
-		fp.Close()
-	}()
+	defer w.Close()
 	fIter := NewFilePairIter(txtPath, true, false)
 	trie := CompileTrie(fIter.IterPairFile)
 	err = trie.WriteToBytes(w)
@@ -246,10 +188,10 @@ func NewDictCellRecognizer(fpath string) (*DictCellRecognizer, error) {
 }
 
 //Read is read a cell
-func (dict *DictCellRecognizer) Read(content []*Atom, cmap *CellMap) {
+func (dict *DictCellRecognizer) Read(content *AtomList, cmap *CellMap) {
 	cur := cmap.Head
-	dict.trie.ParseText(NewAtomStrIter(content, true, false).IterStr, func(start, end, label int) bool {
-		cell := NewWcell(SubAtomList(content, start, end), start, end)
+	dict.trie.ParseText(content.StrIterFuc(true, false), func(start, end, label int) bool {
+		cell := NewWcell(content.SubAtomList(start, end), start, end)
 		l, ok := dict.label[label]
 		if ok {
 			cell.Word.AddType(l)
@@ -277,7 +219,7 @@ func init() {
 
 //Split split the string and tag it
 func Split(content *string, maxMode bool, tagUse bool) []Pair {
-	atomlist := BasiSplitStr(content, false)
+	atomlist := NewAtomList(BasiSplitStr(content, false), content)
 	wlist := segment.SmartCut(atomlist, maxMode)
 	if wlist != nil {
 		result := make([]Pair, len(wlist))
