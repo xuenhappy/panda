@@ -163,9 +163,20 @@ type CellMap struct {
 	rows, colums, size int     // this cellmap countor
 }
 
+func newCellMap() *CellMap {
+	cmap := new(CellMap)
+	cmap.Head = new(Cursor)
+	cmap.Head.idx = -1
+	cmap.Head.val = new(WCell)
+	cmap.Head.val.St = -1
+	cmap.Head.val.Et = 0
+	return cmap
+}
+
 func (cmap *CellMap) indexMap() {
 	node := cmap.Head
-	index := -1
+	node.idx = -1
+	index := node.idx
 	for node.lack != nil {
 		node = node.lack
 		index++
@@ -173,28 +184,19 @@ func (cmap *CellMap) indexMap() {
 	}
 }
 
-func newCellMap() *CellMap {
-	cmap := new(CellMap)
-	cmap.Head = new(Cursor)
-	cmap.Head.val = new(WCell)
-	cmap.Head.val.St = -1
-	cmap.Head.val.Et = 0
-	return cmap
-}
-
 //IterRow is iter the cellmap ,if row<0 tits iter all
 func (cmap *CellMap) IterRow(cur *Cursor, row int, dfunc func(*Cursor)) {
 	if cur == nil {
 		cur = cmap.Head
 	}
-	if row < 0 {
+	if row < 0 { //Iter all if row is negtive
 		for cur.lack != nil {
 			dfunc(cur.lack)
 			cur = cur.lack
 		}
 		return
 	}
-	for cur.lack != nil {
+	for cur.lack != nil { //Iter the give row from start
 		n := cur.lack
 		if n.val.St < row {
 			cur = n
