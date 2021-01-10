@@ -2,27 +2,19 @@ package main
 
 import (
 	"fmt"
+	"github.com/clagraff/argparse"
 	"os"
 	"panda/darts"
 	"strings"
 )
 
-func main1() {
-	if len(os.Args) < 3 {
-		fmt.Println("panda_devel input ouputs")
-		return
-	}
-	darts.CompileTxtMatchDict(os.Args[1], os.Args[2])
-}
-
-func main() {
-	trie, label, err := darts.LoadTrieDict(os.Args[1])
+func splitStr(path, tokens string) {
+	trie, label, err := darts.LoadTrieDict(path)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
-	str := "南京市长江大桥一代新人换旧人通车了"
-	atoms := darts.NewAtomList(darts.BasiSplitStr(&str, false), &str)
+	atoms := darts.NewAtomList(darts.BasiSplitStr(&tokens, false), &tokens)
 	trie.ParseText(atoms.StrIterFuc(true, false), func(start, end int, labels []int) bool {
 		atom := atoms.SubAtomList(start, end)
 		var tagsBuilder strings.Builder
@@ -34,4 +26,50 @@ func main() {
 		return false
 	})
 
+}
+
+func main() {
+	//create a complie tire dict action
+	createCompile := argparse.NewParser("compile a file dict to dict", func(parser *argparse.Parser, ns *argparse.Namespace, overArgs []string, err error) {
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		args := ns.Get("io").([]string)
+		err = darts.CompileTxtMatchDict(args[0], args[1])
+		if err != nil {
+			fmt.Println(err)
+		}
+	})
+	createCompile.AddOption(argparse.NewArg("io", "io", "[input dict file] [outfile]").Nargs(2).Required())
+	createCompile.AddHelp()
+
+	split := argparse.NewParser("split a string", func(parser *argparse.Parser, ns *argparse.Namespace, overArgs []string, err error) {
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		args := ns.Get("data").([]string)
+		splitStr(args[0], args[1])
+	})
+
+	split.AddOption(argparse.NewArg("inputs", "data", "[dict path] [string]").Nargs(2).Required())
+	split.AddHelp()
+
+	p := argparse.NewParser("panda devel tools", func(parser *argparse.Parser, ns *argparse.Namespace, overArgs []string, err error) {
+		if err != nil {
+			switch err.(type) {
+			case argparse.ShowHelpErr, argparse.ShowVersionErr:
+				return
+			default:
+				fmt.Println(err)
+				parser.ShowHelp()
+			}
+			return
+		}
+	})
+	p.AddParser("compile", createCompile)
+	p.AddParser("split", split)
+	p.AddHelp().AddVersion()
+	p.Parse(os.Args[1:]...)
 }
