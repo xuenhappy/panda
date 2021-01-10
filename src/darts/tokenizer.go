@@ -133,7 +133,7 @@ func CompileTxtMatchDict(txtPath, outpath string) error {
 	if err != nil {
 		return err
 	}
-	fp.Close()
+	defer fp.Close()
 	buf := bufio.NewWriter(fp)
 	defer buf.Flush()
 	w := gzip.NewWriter(buf)
