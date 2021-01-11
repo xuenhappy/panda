@@ -28,7 +28,7 @@ func splitStr(path, tokens string) {
 
 }
 
-func main() {
+func main1() {
 	//create a complie tire dict action
 	createCompile := argparse.NewParser("compile a file dict to dict", func(parser *argparse.Parser, ns *argparse.Namespace, overArgs []string, err error) {
 		if err != nil {
