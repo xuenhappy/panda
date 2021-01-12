@@ -90,9 +90,11 @@ class Quantizer(nn.Module):
         nn.Module.__init__(self)
         self.Kmap = nn.Linear(input_size, 50)
         self.Vmap = nn.Linear(input_size, 50)
+        self.bnorm = nn.BatchNorm1d(1)
 
     def distance(self, x, y):
-        return F.selu((self.Kmap(x)*self.Vmap(y)).sum(-1))
+        dist = (self.Kmap(x)*self.Vmap(y)).sum(-1)
+        return F.selu(self.bnorm(dist))
 
 
 class SentencePredict(nn.Module):
