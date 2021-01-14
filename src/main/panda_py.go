@@ -31,13 +31,6 @@ func basicToken(str *C.char, pieceEng int) *C.char {
 	return nil
 }
 
-var charIndex map[string]int
-
-//init charIndex
-func init() {
-
-}
-
 //export buildFileTireDict
 func buildFileTireDict(inputpath *C.char, outputpath *C.char) {
 	err := darts.CompileTxtMatchDict(C.GoString(inputpath), C.GoString(outputpath))
@@ -46,20 +39,24 @@ func buildFileTireDict(inputpath *C.char, outputpath *C.char) {
 	}
 }
 
+type qSample struct {
+	tokens []*darts.Atom
+	cells  []*darts.Atom
+}
+
 //export develQSample
 func develQSample(str *C.char) *C.char {
+	var sample qSample
 	data := C.GoString(str)
 	alist := darts.BasiSplitStr(&data, false)
-	sample := darts.ToDevelQSample(darts.NewAtomList(alist, &data), charIndex)
-	if sample != nil {
-		buf := new(bytes.Buffer)
-		err := json.NewEncoder(buf).Encode(sample)
-		if err != nil {
-			fmt.Println(err)
-		}
-		return C.CString(buf.String())
+	sample.tokens = darts.BasiSplitStr(&data, true)
+	sample.cells = darts.ToDevelQSample(darts.NewAtomList(alist, &data))
+	buf := new(bytes.Buffer)
+	err := json.NewEncoder(buf).Encode(sample)
+	if err != nil {
+		fmt.Println(err)
 	}
-	return nil
+	return C.CString(buf.String())
 }
 
 func main1() {

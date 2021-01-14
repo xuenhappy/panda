@@ -239,23 +239,15 @@ func Split(content *string, maxMode bool, tagUse bool) []Pair {
 	return nil
 }
 
-//QSample is devel use
-type QSample struct {
-	Atoms  []*Atom  //split aotoms
-	Seqs   [][3]int //every word (char start,char end,word idx)
-	Points [][2]int //point of char [start,end)
-	Graph  [][2]int //graph of point (idx_x,idx_y)
-}
-
 //ToDevelQSample build a devel sample to network use
-func ToDevelQSample(atomList *AtomList, charIndex map[string]int) *QSample {
+func ToDevelQSample(atomList *AtomList) []*Atom {
 	if len(atomList.List) < 2 { //too short
 		return nil
 	}
-	//cmap := segment.buildMap(atomList)
-	sample := new(QSample)
-	sample.Atoms = atomList.List
-	//TODO: gen seq,points,graph
-
-	return sample
+	cmap := segment.buildMap(atomList)
+	data := make([]*Atom, 0, cmap.size)
+	cmap.IterRow(nil, -1, func(c *Cursor) {
+		data = append(data, c.val.Word)
+	})
+	return data
 }
