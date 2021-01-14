@@ -19,6 +19,8 @@ lib = ctypes.cdll.LoadLibrary(os.path.join(__py_dir, 'panda.so'))
 basicToken = lib.basicToken
 basicToken.argtypes = [ctypes.c_char_p, ctypes.c_int]
 
+develQSample=lib.develQSample
+develQSample.argtypes = [ctypes.c_char_p]
 
 def bToken(content, piceEng):
     if content is None:
@@ -31,5 +33,16 @@ def bToken(content, piceEng):
     return []
 
 
-str = bToken("中华任命hello words!", 1)
+def toSample(content):
+    if content is None:
+        return []
+    goResult = develQSample(content.encode("utf-8"))
+    go_str = str(ctypes.c_char_p(goResult).value, encoding="utf-8")
+    lib.freeCStr(goResult)
+    if go_str:
+        return json.loads(go_str)
+    return []
+
+
+str = toSample("中华任命hello words!")
 print(str)
