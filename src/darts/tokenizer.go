@@ -122,7 +122,7 @@ func (fIter *FilePairIter) IterPairFile(dfunc func(StringIter, []int) bool) {
 	})
 	fIter.label = labels
 	if err != nil {
-		fmt.Printf("Open file failed [Err:%s]\n", err.Error())
+		panic(fmt.Errorf("Open file failed [Err:%s]", err.Error()))
 	}
 }
 
