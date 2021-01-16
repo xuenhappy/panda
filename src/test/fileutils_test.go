@@ -6,6 +6,5 @@ import (
 )
 
 func TestGetPath(t *testing.T) {
-	x, _ := utils.GetExePath()
-	t.Log(x)
+	t.Log(utils.GetExeDir())
 }

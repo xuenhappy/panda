@@ -13,33 +13,25 @@ package utils
 
 import (
 	"bufio"
-	"errors"
 	"io"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
-	"strings"
 )
 
-//GetExePath  get exe file path
-func GetExePath() (string, error) {
-	file, err := exec.LookPath(os.Args[0])
+//GetExeDir  get exe file path
+func GetExeDir() string {
+	var dirAbsPath string
+	ex, err := os.Executable()
+	if err == nil {
+		dirAbsPath = filepath.Dir(ex)
+		return dirAbsPath
+	}
+	exReal, err := filepath.EvalSymlinks(ex)
 	if err != nil {
-		return "", err
+		panic(err)
 	}
-	path, err := filepath.Abs(file)
-	if err != nil {
-		return "", err
-	}
-	i := strings.LastIndex(path, "/")
-	if i < 0 {
-		i = strings.LastIndex(path, "\\")
-	}
-	if i < 0 {
-		return "", errors.New("error: Can't find '/' or '.'")
-	}
-	return string(path[0 : i+1]), nil
+	return filepath.Dir(exReal)
 }
 
 //GetResource get the resource path
@@ -47,17 +39,15 @@ func GetResource(source string) string {
 	if _, err := os.Stat(source); !os.IsNotExist(err) {
 		return source
 	} //exist in current pwd path
-	spath, err := GetExePath()
-	if err == nil {
-		spath = path.Join(spath, source)
-		if _, err = os.Stat(spath); !os.IsNotExist(err) {
-			return spath
-		} //exist in exe path
-	}
-	spath = path.Join(os.Getenv("SOURCE_PATH"), source)
-	if _, err = os.Stat(spath); !os.IsNotExist(err) {
+	spath := path.Join(GetExeDir(), source)
+	if _, err := os.Stat(spath); !os.IsNotExist(err) {
 		return spath
 	} //exist in exe path
+
+	spath = path.Join(os.Getenv("SOURCE_PATH"), source)
+	if _, err := os.Stat(spath); !os.IsNotExist(err) {
+		return spath
+	} //exist in env path
 	return source
 }
 
