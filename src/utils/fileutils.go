@@ -50,16 +50,22 @@ func GetResource(source string) string {
 	if _, err := os.Stat(source); !os.IsNotExist(err) {
 		return source
 	} //exist in current pwd path
-	spath := path.Join(GetExeDir(), source)
-	if _, err := os.Stat(spath); !os.IsNotExist(err) {
-		return spath
-	} //exist in exe path
 
-	spath = path.Join(os.Getenv("SOURCE_PATH"), source)
+	spath := path.Join(os.Getenv("SOURCE_PATH"), source)
 	if _, err := os.Stat(spath); !os.IsNotExist(err) {
 		return spath
 	} //exist in env path
-
+	exedir := GetExeDir()
+	if len(exedir) > 0 {
+		spath = path.Join(exedir, source)
+		if _, err := os.Stat(spath); !os.IsNotExist(err) {
+			return spath
+		} //exist in exe path
+		spath = path.Join(exedir, "../", source)
+		if _, err := os.Stat(spath); !os.IsNotExist(err) {
+			return spath
+		} //exist in exe father path
+	}
 	dlldir := GetDllDir()
 	if len(dlldir) > 0 {
 		spath = path.Join(dlldir, source)
