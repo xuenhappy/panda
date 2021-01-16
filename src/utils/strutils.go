@@ -91,15 +91,13 @@ func loadUnVisual() {
 func loadFileMap() {
 	filePtr, err := os.Open(GetResource("data/confusables.json"))
 	if err != nil {
-		fmt.Printf("Open file failed [Err:%s]\n", err.Error())
-		return
+		panic(fmt.Errorf("Open file failed [Err:%s]", err.Error()))
 	}
 	defer filePtr.Close()
 	var data interface{}
 	err = json.NewDecoder(filePtr).Decode(&data)
 	if err != nil {
-		fmt.Println("Decoder failed", err.Error())
-		return
+		panic(fmt.Errorf("Decoder file failed [Err:%s]", err.Error()))
 	}
 	m := data.(map[string]interface{})
 	for k, v := range m {

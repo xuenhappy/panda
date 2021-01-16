@@ -34,7 +34,7 @@ func (t *wTable) loadUntoken(path string) {
 		return false
 	})
 	if err != nil {
-		fmt.Printf("Open file failed [Err:%s]\n", err.Error())
+		panic(fmt.Errorf("Open file failed [Err:%s]", err.Error()))
 	}
 }
 
@@ -68,8 +68,7 @@ func (t *wTable) loadToken(path string) {
 		return false
 	})
 	if err != nil {
-		fmt.Printf("Open file failed [Err:%s]\n", err.Error())
-		return
+		panic(fmt.Errorf("Open file failed [Err:%s]", err.Error()))
 	}
 	//static
 	for k, v := range t.tokeMap {

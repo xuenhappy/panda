@@ -423,10 +423,6 @@ type Segment struct {
 
 //NewSegment make a new segment
 func NewSegment(q CellQuantizer) *Segment {
-	if q == nil {
-		fmt.Println("q is must be not nil")
-		return nil
-	}
 	s := new(Segment)
 	s.quantizer = q
 	s.cellRecognizers = make([]CellRecognizer, 0, 2)
