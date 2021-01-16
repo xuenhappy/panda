@@ -1,15 +1,20 @@
-/*
- * File: fileutils.go
- * Project: utils
- * File Created: Thursday, 31st December 2020 10:57:11 pm
- * Author: enxu (xuen@mokar.com)
- * -----
- * Last Modified: Thursday, 31st December 2020 10:57:16 pm
- * Modified By: enxu (xuen@mokahr.com)
- * -----
- * Copyright 2021 - 2020 Your Company, Moka
- */
 package utils
+
+/*
+#cgo linux LDFLAGS: -ldl
+#include <dlfcn.h>
+#include <stdlib.h>
+
+const char *dllPath(void) {
+	Dl_info dl_info;
+	int rc=dladdr((void*)dllPath, &dl_info);
+	if (!rc){
+		return "";
+	}
+    return(dl_info.dli_fname);
+}
+*/
+import "C"
 
 import (
 	"bufio"
@@ -18,6 +23,12 @@ import (
 	"path"
 	"path/filepath"
 )
+
+//GetDllDir get a dll path
+func GetDllDir() string {
+	dllpath := C.GoString(C.dllPath())
+	return filepath.Dir(dllpath)
+}
 
 //GetExeDir  get exe file path
 func GetExeDir() string {
@@ -48,6 +59,19 @@ func GetResource(source string) string {
 	if _, err := os.Stat(spath); !os.IsNotExist(err) {
 		return spath
 	} //exist in env path
+
+	dlldir := GetDllDir()
+	if len(dlldir) > 0 {
+		spath = path.Join(dlldir, source)
+		if _, err := os.Stat(spath); !os.IsNotExist(err) {
+			return spath
+		} //exist in dll path
+
+		spath = path.Join(dlldir, "../", source)
+		if _, err := os.Stat(spath); !os.IsNotExist(err) {
+			return spath
+		} //exist in dll father path
+	}
 	return source
 }
 
