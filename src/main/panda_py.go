@@ -39,18 +39,20 @@ func buildFileTireDict(inputpath *C.char, outputpath *C.char) {
 	}
 }
 
-type qSample struct {
-	tokens []*darts.Atom
-	cells  []*darts.Atom
+//QSample is so use
+type QSample struct {
+	Tokens []*darts.Atom
+	Cells  []*darts.Atom
 }
 
 //export develQSample
 func develQSample(str *C.char) *C.char {
-	var sample qSample
+	var sample QSample
 	data := C.GoString(str)
 	alist := darts.BasiSplitStr(&data, false)
-	sample.tokens = darts.BasiSplitStr(&data, true)
-	sample.cells = darts.ToDevelQSample(darts.NewAtomList(alist, &data))
+	sample.Tokens = darts.BasiSplitStr(&data, true)
+	sample.Cells = darts.ToDevelQSample(darts.NewAtomList(alist, &data))
+
 	buf := new(bytes.Buffer)
 	err := json.NewEncoder(buf).Encode(sample)
 	if err != nil {
@@ -59,7 +61,7 @@ func develQSample(str *C.char) *C.char {
 	return C.CString(buf.String())
 }
 
-func main1() {
+func main() {
 	// go build -buildmode=c-shared -o ../devel/panda.so main/panda_py.go
 
 }

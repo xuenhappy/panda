@@ -17,7 +17,6 @@ import (
 	"fmt"
 	"os"
 	"panda/utils"
-	"path"
 	"strings"
 )
 
@@ -27,10 +26,7 @@ var charTypeMap map[string]string = map[string]string{}
 const emptyFlag = "<EMPTY>"
 
 func loadTableFile() {
-	filepath, _ := utils.GetExePath()
-	//filepath= "/home/enxu/Documents/workspace/panda/"
-	filepath = path.Join(filepath, "data/wordtype.json")
-	filePtr, err := os.Open(filepath)
+	filePtr, err := os.Open(utils.GetResource("data/wordtype.json"))
 	if err != nil {
 		fmt.Printf("Open file failed [Err:%s]\n", err.Error())
 		return

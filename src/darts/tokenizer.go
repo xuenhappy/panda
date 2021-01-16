@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"panda/utils"
-	"path"
 	"regexp"
 	"strings"
 )
@@ -214,10 +213,7 @@ var segment *Segment
 //init the segment
 func init() {
 	segment = NewSegment(nil)
-	filepath, _ := utils.GetExePath()
-	//filepath= "/home/enxu/Documents/workspace/panda/"
-	filepath = path.Join(filepath, "data/panda.dict")
-	dict, err := NewDictCellRecognizer(filepath)
+	dict, err := NewDictCellRecognizer(utils.GetResource("data/panda.dict"))
 	if err != nil {
 		fmt.Printf("Open file failed [Err:%s]\n", err.Error())
 		return

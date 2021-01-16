@@ -16,32 +16,40 @@ __py_dir = os.path.split(os.path.realpath(__file__))[0]
 lib = ctypes.cdll.LoadLibrary(os.path.join(__py_dir, 'panda.so'))
 
 # token function
+freeStr = lib.freeCStr
+freeStr.argtypes = ctypes.c_void_p,
+freeStr.restype = None
+
+
 basicToken = lib.basicToken
 basicToken.argtypes = [ctypes.c_char_p, ctypes.c_int]
+basicToken.restype = ctypes.c_void_p
 
-develQSample=lib.develQSample
-develQSample.argtypes = [ctypes.c_char_p]
+develQSample = lib.develQSample
+develQSample.argtypes = ctypes.c_char_p,
+develQSample.restype = ctypes.c_void_p
 
-def bToken(content, piceEng):
+
+def __point2json__(point):
+    go_str = str(ctypes.c_char_p(point).value, encoding="utf-8")
+    freeStr(point)
+    if go_str:
+        return json.loads(go_str)
+    return None
+
+
+def bToken(content, piceEng=False):
     if content is None:
         return []
     goResult = basicToken(content.encode("utf-8"), int(piceEng))
-    go_str = str(ctypes.c_char_p(goResult).value, encoding="utf-8")
-    lib.freeCStr(goResult)
-    if go_str:
-        return json.loads(go_str)
-    return []
+    return __point2json__(goResult)
 
 
 def toSample(content):
     if content is None:
         return []
     goResult = develQSample(content.encode("utf-8"))
-    go_str = str(ctypes.c_char_p(goResult).value, encoding="utf-8")
-    lib.freeCStr(goResult)
-    if go_str:
-        return json.loads(go_str)
-    return []
+    return __point2json__(goResult)
 
 
 str = toSample("中华任命hello words!")

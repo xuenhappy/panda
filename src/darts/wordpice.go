@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 	"panda/utils"
-	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -152,12 +151,8 @@ func init() {
 	table.tokeMap = make(map[string]*fReq)
 	table.untokenMap = make(map[string]int)
 	table.minFreq = math.MaxInt32
-	epath, _ := utils.GetExePath()
-	epath = "/Users/xuen/Documents/workspace/panda"
-	fpath := path.Join(epath, "data/ueng.txt")
-	table.loadUntoken(fpath)
-	fPpath := path.Join(epath, "data/uepice.txt")
-	table.loadToken(fPpath)
+	table.loadUntoken(utils.GetResource("data/ueng.txt"))
+	table.loadToken(utils.GetResource("data/uepice.txt"))
 	splitter = NewSegment(table)
 	splitter.AddCellRecognizer(table)
 }

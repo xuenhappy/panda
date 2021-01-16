@@ -17,6 +17,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 )
@@ -39,6 +40,25 @@ func GetExePath() (string, error) {
 		return "", errors.New("error: Can't find '/' or '.'")
 	}
 	return string(path[0 : i+1]), nil
+}
+
+//GetResource get the resource path
+func GetResource(source string) string {
+	if _, err := os.Stat(source); !os.IsNotExist(err) {
+		return source
+	} //exist in current pwd path
+	spath, err := GetExePath()
+	if err == nil {
+		spath = path.Join(spath, source)
+		if _, err = os.Stat(spath); !os.IsNotExist(err) {
+			return spath
+		} //exist in exe path
+	}
+	spath = path.Join(os.Getenv("SOURCE_PATH"), source)
+	if _, err = os.Stat(spath); !os.IsNotExist(err) {
+		return spath
+	} //exist in exe path
+	return source
 }
 
 //ReadLine read a text file
