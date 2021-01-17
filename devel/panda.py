@@ -21,6 +21,11 @@ freeStr.argtypes = ctypes.c_void_p,
 freeStr.restype = None
 
 
+buildFileTireDict = lib.buildFileTireDict
+buildFileTireDict.argtypes = [ctypes.c_char_p, ctypes.c_char_p]
+buildFileTireDict.restype = None
+
+
 basicToken = lib.basicToken
 basicToken.argtypes = [ctypes.c_char_p, ctypes.c_int]
 basicToken.restype = ctypes.c_void_p
@@ -50,6 +55,10 @@ def toSample(content):
         return []
     goResult = develQSample(content.encode("utf-8"))
     return __point2json__(goResult)
+
+
+def buildDict(dictfile, outfile):
+    buildFileTireDict(dictfile.encode("utf-8"), outfile.encode("utf-8"))
 
 
 str = toSample("中华任命hello words!")

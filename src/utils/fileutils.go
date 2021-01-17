@@ -32,11 +32,9 @@ func GetDllDir() string {
 
 //GetExeDir  get exe file path
 func GetExeDir() string {
-	var dirAbsPath string
 	ex, err := os.Executable()
 	if err == nil {
-		dirAbsPath = filepath.Dir(ex)
-		return dirAbsPath
+		return filepath.Dir(ex)
 	}
 	exReal, err := filepath.EvalSymlinks(ex)
 	if err != nil {
