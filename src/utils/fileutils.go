@@ -2,6 +2,7 @@ package utils
 
 /*
 #cgo linux LDFLAGS: -ldl
+#define _GNU_SOURCE
 #include <dlfcn.h>
 #include <stdlib.h>
 
