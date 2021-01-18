@@ -213,7 +213,7 @@ var segment *Segment
 //init the segment
 func init() {
 	segment = NewSegment(nil)
-	dict, err := NewDictCellRecognizer(utils.GetResource("data/panda.dict"))
+	dict, err := NewDictCellRecognizer(utils.GetResource("data/panda.pd"))
 	if err != nil {
 		fmt.Printf("Open file failed [Err:%s]\n", err.Error())
 		return
