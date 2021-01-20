@@ -181,3 +181,29 @@ func SubEngWord(engw string) []string {
 	}
 	return result
 }
+
+var numReg, _ = regexp.Compile("^\\d+$")
+
+//SubNumStr sub the num str
+func SubNumStr(numStr string) []string {
+	if !numReg.Match(utils.Str2Bytes(numStr)) {
+		return []string{numStr}
+	}
+	piceNum := 3
+	sidx, leftnum := 0, len(numStr)%piceNum
+	lenOuts := len(numStr) / piceNum
+	if leftnum != 0 {
+		lenOuts++
+	} else {
+		leftnum = piceNum
+	}
+	outs := make([]string, lenOuts)
+	for i := 0; i < lenOuts; i++ {
+		endi := piceNum*i + leftnum
+		outs[i] = fmt.Sprintf("%s,", numStr[sidx:endi])
+		sidx = endi
+	}
+	lastStr := outs[lenOuts-1]
+	outs[lenOuts-1] = lastStr[0 : len(lastStr)-1]
+	return outs
+}

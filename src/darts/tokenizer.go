@@ -58,12 +58,26 @@ func BasiSplitStr(str *string, piceEng bool) []*Atom {
 				atom.AddType(stype)
 				result = append(result, atom)
 			}
-
-		} else {
-			atom := NewAtom(&img, s, e)
-			atom.AddType(stype)
-			result = append(result, atom)
+			return
 		}
+		if stype == "<NUM>" {
+			pices := SubNumStr(img)
+			lems := s
+			for _, w := range pices {
+				alen := len(w)
+				if w[alen-1] == ',' {
+					alen--
+				}
+				atom := NewAtom(&w, lems, lems+alen)
+				lems += alen
+				atom.AddType(stype)
+				result = append(result, atom)
+			}
+			return
+		}
+		atom := NewAtom(&img, s, e)
+		atom.AddType(stype)
+		result = append(result, atom)
 	})
 	return result
 }

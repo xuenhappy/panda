@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"unsafe"
 )
 
 /*
@@ -143,4 +144,16 @@ func MapWord(input *string) string {
 		builder.WriteRune(x)
 	}
 	return builder.String()
+}
+
+//Str2Bytes fast convert str to bytes
+func Str2Bytes(s string) []byte {
+	x := (*[2]uintptr)(unsafe.Pointer(&s))
+	h := [3]uintptr{x[0], x[1], x[1]}
+	return *(*[]byte)(unsafe.Pointer(&h))
+}
+
+//Bytes2Str fast convert byte to str
+func Bytes2Str(b []byte) string {
+	return *(*string)(unsafe.Pointer(&b))
 }
