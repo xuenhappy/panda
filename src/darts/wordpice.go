@@ -186,10 +186,11 @@ var numReg, _ = regexp.Compile("^\\d+$")
 
 //SubNumStr sub the num str
 func SubNumStr(numStr string) []string {
-	if !numReg.Match(utils.Str2Bytes(numStr)) {
+	piceNum := 3
+	if (len(numStr) <= piceNum) || !numReg.Match(utils.Str2Bytes(numStr)) {
 		return []string{numStr}
 	}
-	piceNum := 3
+
 	sidx, leftnum := 0, len(numStr)%piceNum
 	lenOuts := len(numStr) / piceNum
 	if leftnum != 0 {
