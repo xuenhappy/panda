@@ -80,7 +80,7 @@ func readMatFromNpz(rz npz.Reader, name string) (mat.Matrix, error) {
 	key := fmt.Sprintf("%s.npy", name)
 	header := rz.Header(key)
 	if header == nil {
-		return nil, fmt.Errorf("could not find the matrix named %s", name)
+		return nil, nil
 	}
 	shape := header.Descr.Shape
 	if len(shape) > 2 {
