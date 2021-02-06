@@ -4,12 +4,61 @@ import (
 	"fmt"
 	"github.com/sbinet/npyio/npz"
 	"gonum.org/v1/gonum/mat"
+	"math"
 )
+
+type actFunc func(i, j int, v float64) float64
 
 //DenseNet is a dense net
 type DenseNet struct {
-	w mat.Matrix
-	b mat.Vector
+	w      mat.Matrix
+	b      mat.Vector
+	active actFunc
+}
+
+//Sigmoid a active function
+func Sigmoid(r, c int, z float64) float64 {
+	return 1.0 / (1 + math.Exp(-1*z))
+}
+
+//Tanh active func
+func Tanh(r, c int, z float64) float64 {
+	return math.Tanh(z)
+}
+
+func applyCopy(fn actFunc, m mat.Matrix) mat.Matrix {
+	r, c := m.Dims()
+	o := mat.NewDense(r, c, nil)
+	o.Apply(fn, m)
+	return o
+}
+
+func liner(input, w mat.Matrix, b mat.Vector) *mat.Dense {
+	var c mat.Dense
+	c.Mul(input, w)
+	if b != nil { //add blas
+		r, _ := c.Dims()
+		var x mat.VecDense
+		for i := 0; i < r; i++ {
+			x.AddVec(c.RowView(i), b)
+			c.SetRow(i, x.RawVector().Data)
+		}
+	}
+	return &c
+}
+
+//Forward do net work
+func (dense *DenseNet) Forward(input mat.Matrix) mat.Matrix {
+	c := liner(input, dense.w, dense.b)
+	if dense.active != nil {
+		c.Apply(dense.active, c)
+	}
+	return c
+}
+
+//SetAct set the active
+func (dense *DenseNet) SetAct(act actFunc) {
+	dense.active = act
 }
 
 //RNNCell is rnn cell
