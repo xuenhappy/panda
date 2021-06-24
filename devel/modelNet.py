@@ -11,7 +11,7 @@ import torch.nn as nn
 from torch.nn import functional as F
 
 
-class SMelmo(nn.Module):
+class SMelo(nn.Module):
     def __init__(self, token_size):
         super().__init__()
         self.embeding = nn.Embedding(token_size, 150)
@@ -33,71 +33,21 @@ class SMelmo(nn.Module):
         return self.bd(out.view(-1, out.size(2))).view(out.shape)
 
 
-def init_param(model):
-    for p in model.parameters():
-        if len(p.shape) == 2:
-            nn.init.xavier_uniform_(p)
-            continue
-        nn.init.zeros_(p)
-
-
-def batch_select(tensor, index):
-    return tensor.gather(1, index.view(-1, 1, 1).expand(tensor.size(0), 1, tensor.size(2))).squeeze(1)
-
-
-def abs_max(x, dim):
-    # return max positive num or min negtive num or if both max+min
-    max_, _ = x.max(dim)
-    min_, _ = x.min(dim)
-    max_ = max_ * (max_ > 0).float()
-    min_ = min_ * (min_ < 0).float()
-    return max_ + min_
-
-
-class SentenceEncoder(nn.Module):
-    """
-    init the sentence
-    """
-
-    def __init__(self, word_num, out_dim):
-        nn.Module.__init__(self)
-        self.embeds = nn.Embedding(word_num, 100)
-        self.encrnn = nn.GRU(
-            input_size=100,
-            hidden_size=200,
-            num_layers=1,
-            batch_first=True,
-            bidirectional=True
-        )
-        self.weight = torch.Parameter(torch.Tensor(out_dim, 800))
-        init_param(self.encrnn)
-        init_param(self.weight)
-
-    def forward(self, batch_sentence, batch_sentence_length, keep_prop):
-        """
-        batch_sentence shape:batch_size×word_size
-        batch_sentence_length:batch_size
-        """
-        batch_titles_emb = self.embeds(batch_titles)
-        batch_titles_emb = F.dropout(batch_titles_emb, 1 - keep_prop, keep_prop < 1.0)
-        title_vecs = RunRnn(self.encrnn, batch_titles_conv, batch_title_length)
-        return F.linear(title_vecs, self.weight[:, :400], None), F.linear(title_vecs, self.weight[:, 400:], None)
-
-
 class Quantizer(nn.Module):
 
-    def __init__(self, input_size):
+    def __init__(self, input_size, hidden_size):
         nn.Module.__init__(self)
-        self.Kmap = nn.Linear(input_size, 50)
-        self.Vmap = nn.Linear(input_size, 50)
-        self.bnorm = nn.BatchNorm1d(1)
+        self.Kmap = nn.Linear(input_size, hidden_size)
+        self.Qmap = nn.Linear(input_size, hidden_size)
+        self.alpha = np.sqrt(hidden_size)
 
     def distance(self, x, y):
-        dist = (self.Kmap(x)*self.Vmap(y)).sum(-1)
-        return F.selu(self.bnorm(dist))
+        K, Q = self.Kmap(x), self.Qmap(y)
+        dist = torch.einsum('ij,ij->i', K, Q)/self.alpha
+        return F.softplus(dist)
 
 
-class SentencePredict(nn.Module):
+class SMeloTrainer(nn.Module):
     """
     init the sentence
     """

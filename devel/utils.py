@@ -12,8 +12,8 @@ class SampledSoftMaxCrossEntropy(nn.Module):
         """
         super(SampledSoftMaxCrossEntropy, self).__init__()
         self.nsampled = nsampled
-        self.weight = Parameter(torch.Tensor(len(tags_weight), emb_size))
-        self.bias = Parameter(torch.Tensor(len(tags_weight)))
+        self.weight = nn.Parameter(torch.Tensor(len(tags_weight), emb_size))
+        self.bias = nn.Parameter(torch.Tensor(len(tags_weight)))
         self.sample_map = self.__genmap__(tags_weight)
         self.loss_fn = nn.CrossEntropyLoss()
 
